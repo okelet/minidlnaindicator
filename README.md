@@ -63,9 +63,14 @@ open from the menu the LOG. If you change the configuration, please remember to 
 * Make it run with Python 2 and 3
 
 
-## Credits
+## Me
 
-My website (in spanish): https://okelet.github.io
+Website (in spanish): https://okelet.github.io
+
+Email: okelet@gmail.com
+
+
+## Credits
 
 Icons from:
 
