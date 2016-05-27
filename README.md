@@ -23,7 +23,7 @@ Tested from these devices (tests from more devices are welcome):
 
 ## Instalation
 
-No `deb` or `rpm` packages available; only from Github; if someone want to contribute, it will be welcome.
+No `deb` or `rpm` packages available; only from Github; if someone wants to contribute, it will be welcome.
 
 To download and run the application, execute this commands:
 
@@ -64,6 +64,8 @@ open from the menu the LOG. If you change the configuration, please remember to 
 
 
 ## Credits
+
+My website (in spanish): https://okelet.github.io
 
 Icons from:
 
