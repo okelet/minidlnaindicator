@@ -19,6 +19,7 @@ with Python 2.7; some changes needed to run with Python 3 (see TODO).
 Tested from these devices (tests from more devices are welcome):
  
 * [Samsung UE32F5500 TV](http://www.samsung.com/nl/consumer/tv-audio-video/televisions/led-tv/UE32F5500AWXXN)
+* [Android BubbleUPnP](https://play.google.com/store/apps/details?id=com.bubblesoft.android.bubbleupnp)
 
 
 ## Instalation
