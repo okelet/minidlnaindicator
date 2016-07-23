@@ -7,22 +7,22 @@ from datetime import datetime
 import getpass
 import logging, logging.config
 import os
+from pprint import pprint, pformat
+import pydbus
 import random
 import re
-import signal
 import subprocess
 import sys
 import threading
 import time
 import uuid
-
 import yaml
 
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('AppIndicator3', '0.1')
 gi.require_version('Notify', '0.7')
-from gi.repository import Gtk, AppIndicator3, Notify, GLib, Gdk
+from gi.repository import Gtk, AppIndicator3, Notify, GLib, Gdk, GObject
 
 
 BASEDIR = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -41,7 +41,8 @@ MINIDLNA_LOG_DIR = MINIDLNA_CONFIG_DIR
 MINIDLNA_LOG_FILE = os.path.join(MINIDLNA_LOG_DIR, "minidlna.log")
 MINIDLNA_INDICATOR_CONFIG = os.path.join(MINIDLNA_CONFIG_DIR, "indicator.yml")
 
-GNOME_AUTOSTART_DIR = os.path.expanduser("~/.config/autostart")
+GNOME_CONFIG_DIR = os.path.expanduser("~/.config")
+GNOME_AUTOSTART_DIR = os.path.join(GNOME_CONFIG_DIR, "autostart")
 MINIDLNA_INDICATOR_GNOME_AUTOSTART_FILE = os.path.join(GNOME_AUTOSTART_DIR, APPINDICATOR_ID + ".desktop")
 
 GNOME_MENU_APPS_DIR = os.path.expanduser("~/.local/share/applications")
@@ -72,6 +73,20 @@ def get_minidlna_path():
         return None
 
 
+def bytearray_to_string(thebytearray):
+    return u"".join(chr(val) for val in thebytearray).rstrip(u"\x00")
+
+
+class DBusPropertiesChanged(object):
+
+    def __init__(self, indicator, dev_path):
+        self.indicator = indicator
+        self.dev_path = dev_path
+
+    def properties_changed(self, type, properties, others):
+        self.indicator.device_changed(self.dev_path, type, properties)
+
+
 class MiniDLNAIndicator(object):
 
     def __init__(self):
@@ -86,6 +101,7 @@ class MiniDLNAIndicator(object):
         self.indicator = AppIndicator3.Indicator.new(APPINDICATOR_ID, MINIDLNA_ICON_GREY, AppIndicator3.IndicatorCategory.APPLICATION_STATUS)
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
 
+        self.minidlna_running = False
         self.minidlna_path = None
         self.minidlna_port = 0
         self.minidlna_dirs = []
@@ -99,6 +115,7 @@ class MiniDLNAIndicator(object):
         self.start_menuitem = None
         self.start_reindex_menuitem = None
         self.restart_menuitem = None
+        self.restart_reindex_menuitem = None
         self.stop_menuitem = None
         self.weblink_menuitem = None
         self.editconfig_menuitem = None
@@ -113,6 +130,19 @@ class MiniDLNAIndicator(object):
         self.logger.debug(u"Startup: Detecting MiniDLNA...")
         self.detect_minidlna()
 
+        # Monitor for usb disks plugs
+        self.current_partitions = []
+        self.bus = pydbus.SystemBus()
+        self.udisks2_manager = self.bus.get('.UDisks2')
+
+        for path, properties in self.udisks2_manager.GetManagedObjects().items():
+            block_properties = properties.get('org.freedesktop.UDisks2.Block')
+            filesystem_properties = properties.get('org.freedesktop.UDisks2.Filesystem')
+            if block_properties and filesystem_properties:
+                self.add_device(path, block_properties, filesystem_properties)
+        self.udisks2_manager.onInterfacesAdded = self.device_added
+        self.udisks2_manager.onInterfacesRemoved = self.device_removed
+
         if self.config.startup_minidlna:
             if not self.get_minidlna_pid():
                 self.logger.debug(u"Startup: Auto-Starting MiniDLNA...")
@@ -120,7 +150,10 @@ class MiniDLNAIndicator(object):
 
         Notify.init(APPINDICATOR_ID)
 
-        GLib.timeout_add_seconds(5, self.background_minidlna_running_status_changes)
+        self.logger.debug(u"Starting thread to monitor minidlna status...")
+        self.background_minidlna_running_status_changes_stopevent = threading.Event()
+        self.background_minidlna_running_status_changes_thread = threading.Thread(target=self.background_minidlna_running_status_changes)
+        self.background_minidlna_running_status_changes_thread.start()
 
         # Notify if minidlna not found
         if not self.minidlna_path:
@@ -130,9 +163,91 @@ class MiniDLNAIndicator(object):
                 None
             ).show()
 
-        signal.signal(signal.SIGINT, self.quit_control_c)
+        # http://stackoverflow.com/questions/16410852/keyboard-interrupt-with-with-python-gtk
+        self.mainloop = GObject.MainLoop()
+        try:
+            self.mainloop.run()
+        except KeyboardInterrupt:
+            self.logger.info(u"Ctrl+C hit, quitting")
+            self.quit(None)
 
-        Gtk.main()
+
+    def add_device(self, path, block_properties, filesystem_properties):
+        device = bytearray_to_string(block_properties.get('Device'))
+        mountpoints = [bytearray_to_string(v) for v in filesystem_properties.get("MountPoints", [])]
+        if not mountpoints:
+            self.logger.warn(u"Device {device} has no mountpoints.".format(device=device))
+        self.current_partitions.append({"dbus_path": path, "device": device, "mountpoints": mountpoints})
+        self.logger.info(u"{path}, adding device {device} in {mountpoints}.".format(path=path, device=device, mountpoints=", ".join(mountpoints)))
+        self.filesystem_changed(mountpoints)
+
+
+    def device_added(self, path, properties):
+        types = properties.keys()
+        if sorted(types) == sorted(['org.freedesktop.UDisks2.Partition', 'org.freedesktop.UDisks2.Filesystem', 'org.freedesktop.UDisks2.Block']):
+            self.logger.info(u"Detected connection of {path}...".format(path=path))
+            block_properties = properties.get('org.freedesktop.UDisks2.Block')
+            filesystem_properties = properties.get('org.freedesktop.UDisks2.Filesystem')
+            if block_properties and filesystem_properties:
+                dev = self.bus.get('.UDisks2', path)
+                dev.onPropertiesChanged = DBusPropertiesChanged(self, path).properties_changed
+                self.add_device(path, block_properties, filesystem_properties)
+
+
+    def device_changed(self, path, type, properties):
+        if type == "org.freedesktop.UDisks2.Filesystem" and 'MountPoints' in properties:
+            found_fs = None
+            for fs_data in self.current_partitions:
+                if fs_data.get("dbus_path") == path:
+                    found_fs = fs_data
+                    break
+            if found_fs:
+                mountpoints = [bytearray_to_string(v) for v in properties.get('MountPoints')]
+                self.logger.debug(u"Changing mountpoints of {device} from {old_mp} to {new_mp}.".format(device=found_fs["device"], old_mp=found_fs["mountpoints"], new_mp=mountpoints))
+                for mountpoint in list(set(found_fs["mountpoints"]) - set(mountpoints)):
+                    self.logger.debug(u"Waiting for removed {mountpoint} to not exist...".format(mountpoint=mountpoint))
+                    while os.path.exists(mountpoint):
+                        time.sleep(1)
+                found_fs["mountpoints"] = mountpoints
+                self.filesystem_changed(mountpoints)
+
+
+    def device_removed(self, path, types):
+        if sorted(types) == sorted(['org.freedesktop.UDisks2.Partition', 'org.freedesktop.UDisks2.Filesystem', 'org.freedesktop.UDisks2.Block']):
+            self.logger.info(u"Detected disconnection of {path}...".format(path=path))
+            found_fs = None
+            for fs_data in self.current_partitions:
+                if fs_data.get("dbus_path") == path:
+                    found_fs = fs_data
+                    break
+            if found_fs:
+                for mountpoint in found_fs["mountpoints"]:
+                    self.logger.debug(u"Waiting for {mountpoint} to not exist...".format(mountpoint=mountpoint))
+                    while os.path.exists(mountpoint):
+                        time.sleep(1)
+                self.current_partitions.remove(found_fs)
+                self.filesystem_changed(found_fs.get("mountpoints"))
+
+
+    def filesystem_changed(self, mountpoints):
+
+        changes_detected = False
+        for dir in self.minidlna_dirs:
+            for mountpoint in mountpoints:
+                if dir["path"].startswith(mountpoint):
+                    self.logger.debug(u"The path for the media dir {dir} is under {mountpoint}; MiniDLNA needs restart.".format(dir=dir["path"], mountpoint=mountpoint))
+                    changes_detected = True
+                    break
+            if changes_detected:
+                break
+
+        if changes_detected:
+            self.logger.debug(u"Rebuilding menu...")
+            self.build_menu()
+            if self.get_minidlna_pid():
+                self.logger.debug(u"Restarting MiniDLNA...")
+                # Fixme: reindex a true
+                self.restart_minidlna_process_nonblocking(False)
 
 
     def ensure_menu_shotcut(self):
@@ -158,23 +273,23 @@ class MiniDLNAIndicator(object):
 
     def detect_minidlna(self):
 
-        self.reset_minidlna_settings()
-
         self.minidlna_path = get_minidlna_path()
+
         if self.minidlna_path:
             self.configure_minidlna()
-
+        else:
+            self.reset_minidlna_settings()
         self.build_menu()
         self.check_running_and_update_menu_status()
 
 
     def background_minidlna_running_status_changes(self):
-        """
-        :return: void
-        """
-        self.logger.debug(u"Periodic task: Checking MiniDLNA status...")
-        self.check_running_and_update_menu_status()
-        return True
+        self.logger.debug(u"Starting minidlna running status background thread...")
+        while not self.background_minidlna_running_status_changes_stopevent.is_set():
+            self.logger.debug(u"Periodic task: Checking MiniDLNA status...")
+            self.check_running_and_update_menu_status()
+            self.background_minidlna_running_status_changes_stopevent.wait(5)
+        self.logger.debug(u"Stopping minidlna running status background thread...")
 
 
     def configure_minidlna(self):
@@ -192,24 +307,22 @@ class MiniDLNAIndicator(object):
             self.logger.debug(u"Creating initial config file...")
             with codecs.open(MINIDLNA_CONFIG_FILE, "w", "utf-8") as f:
                 home_dir = os.path.expanduser("~")
-                f.write("db_dir={db_dir}\n".format(db_dir=MINIDLNA_CACHE_DIR))
+                f.write(u"db_dir={db_dir}\n".format(db_dir=MINIDLNA_CACHE_DIR))
                 self.minidlna_logdir = MINIDLNA_LOG_DIR
-                f.write("log_dir={log_dir}\n".format(log_dir=self.minidlna_logdir))
+                f.write(u"log_dir={log_dir}\n".format(log_dir=self.minidlna_logdir))
                 self.minidlna_port = 8200+random.randint(1, 99)
                 self.logger.debug(u"Setting port to {port}".format(port=self.minidlna_port))
-                f.write("port={port}\n".format(port=self.minidlna_port))
-                f.write("uuid={uuid}\n".format(uuid=uuid.uuid4()))
-                f.write("friendly_name=" + _(u"Multimedia for {user}").format(user=getpass.getuser()) + "\n")
+                f.write(u"port={port}\n".format(port=self.minidlna_port))
+                f.write(u"uuid={uuid}\n".format(uuid=str(uuid.uuid4())))
+                f.write(u"friendly_name=" + _(u"Multimedia for {user}").format(user=getpass.getuser()) + "\n")
 
                 download_dir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOWNLOAD)
                 if download_dir:
                     if download_dir != home_dir:
-                        if os.path.exists(download_dir):
-                            self.logger.debug(u"Adding folder {folder} as downloads...".format(folder=download_dir))
-                            f.write("media_dir={media_dir}\n".format(media_dir=download_dir))
-                            self.minidlna_dirs.append({"path": download_dir, "type": "mixed"})
-                        else:
-                            self.logger.debug(u"Detected download folder {folder} does not exist; ignoring.".format(folder=download_dir))
+                        download_dir = download_dir.decode('utf-8')
+                        self.logger.debug(u"Adding folder {folder} as downloads...".format(folder=download_dir))
+                        f.write(u"media_dir={media_dir}\n".format(media_dir=download_dir))
+                        self.minidlna_dirs.append({"path": download_dir, "type": "mixed"})
                     else:
                         self.logger.debug(u"Detected download folder {folder} is the same as the home folder; ignoring.".format(folder=download_dir))
                 else:
@@ -218,12 +331,10 @@ class MiniDLNAIndicator(object):
                 pictures_dir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES)
                 if pictures_dir:
                     if pictures_dir != home_dir:
-                        if os.path.exists(pictures_dir):
-                            self.logger.debug(u"Adding folder {folder} as pictures...".format(folder=pictures_dir))
-                            f.write("media_dir=P,{media_dir}\n".format(media_dir=pictures_dir))
-                            self.minidlna_dirs.append({"path": pictures_dir, "type": "pictures"})
-                        else:
-                            self.logger.debug(u"Detected pictures folder {folder} does not exist; ignoring.".format(folder=pictures_dir))
+                        pictures_dir = pictures_dir.decode('utf-8')
+                        self.logger.debug(u"Adding folder {folder} as pictures...".format(folder=pictures_dir))
+                        f.write(u"media_dir=P,{media_dir}\n".format(media_dir=pictures_dir))
+                        self.minidlna_dirs.append({"path": pictures_dir, "type": "pictures"})
                     else:
                         self.logger.debug(u"Detected pictures folder {folder} is the same as the home folder; ignoring.".format(folder=pictures_dir))
                 else:
@@ -232,12 +343,10 @@ class MiniDLNAIndicator(object):
                 music_dir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_MUSIC)
                 if music_dir:
                     if music_dir != home_dir:
-                        if os.path.exists(music_dir):
-                            self.logger.debug(u"Adding folder {folder} as music...".format(folder=music_dir))
-                            f.write("media_dir=A,{media_dir}\n".format(media_dir=music_dir))
-                            self.minidlna_dirs.append({"path": music_dir, "type": "audio"})
-                        else:
-                            self.logger.debug(u"Detected music folder {folder} does not exist; ignoring.".format(folder=music_dir))
+                        music_dir = music_dir.decode('utf-8')
+                        self.logger.debug(u"Adding folder {folder} as music...".format(folder=music_dir))
+                        f.write(u"media_dir=A,{media_dir}\n".format(media_dir=music_dir))
+                        self.minidlna_dirs.append({"path": music_dir, "type": "audio"})
                     else:
                         self.logger.debug(u"Detected music folder {folder} is the same as the home folder; ignoring.".format(folder=music_dir))
                 else:
@@ -246,20 +355,14 @@ class MiniDLNAIndicator(object):
                 videos_dir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_VIDEOS)
                 if videos_dir:
                     if videos_dir != home_dir:
-                        if os.path.exists(videos_dir):
-                            self.logger.debug(u"Adding folder {folder} as videos...".format(folder=videos_dir))
-                            f.write("media_dir=A,{media_dir}\n".format(media_dir=videos_dir))
-                            self.minidlna_dirs.append({"path": videos_dir, "type": "audio"})
-                        else:
-                            self.logger.debug(u"Detected videos folder {folder} does not exist; ignoring.".format(folder=videos_dir))
+                        videos_dir = videos_dir.decode('utf-8')
+                        self.logger.debug(u"Adding folder {folder} as videos...".format(folder=videos_dir))
+                        f.write(u"media_dir=V,{media_dir}\n".format(media_dir=videos_dir))
+                        self.minidlna_dirs.append({"path": videos_dir, "type": "video"})
                     else:
                         self.logger.debug(u"Detected videos folder {folder} is the same as the home folder; ignoring.".format(folder=videos_dir))
                 else:
                     self.logger.debug(u"Couldn't detect videos folder; ignoring.")
-
-            if not self.minidlna_port:
-                self.reset_minidlna_settings()
-                self.logger.error(u"No port specified in the configuration file.")
 
         else:
 
@@ -286,45 +389,41 @@ class MiniDLNAIndicator(object):
                         line = re.sub(r'^media_dir=', '', line)
                         if line.startswith("A,"):
                             line = re.sub(r'^A,', '', line)
-                            if os.path.exists(line):
-                                self.logger.debug(u"Adding audio folder {folder}...".format(folder=line))
-                                self.minidlna_dirs.append({"path": line, "type": "audio"})
+                            self.logger.debug(u"Adding audio folder {folder}...".format(folder=line))
+                            self.minidlna_dirs.append({"path": line, "type": "audio"})
                         elif line.startswith("P,"):
                             line = re.sub(r'^P,', '', line)
-                            if os.path.exists(line):
-                                self.logger.debug(u"Adding pictures folder {folder}...".format(folder=line))
-                                self.minidlna_dirs.append({"path": line, "type": "pictures"})
+                            self.logger.debug(u"Adding pictures folder {folder}...".format(folder=line))
+                            self.minidlna_dirs.append({"path": line, "type": "pictures"})
                         elif line.startswith("V,"):
                             line = re.sub(r'^V,', '', line)
-                            if os.path.exists(line):
-                                self.logger.debug(u"Adding video folder {folder}...".format(folder=line))
-                                self.minidlna_dirs.append({"path": line, "type": "video"})
+                            self.logger.debug(u"Adding video folder {folder}...".format(folder=line))
+                            self.minidlna_dirs.append({"path": line, "type": "video"})
                         elif line.startswith("PV,"):
                             line = re.sub(r'^PV,', '', line)
                             self.logger.debug(u"Adding pictures/video folder {folder}...".format(folder=line))
-                            if os.path.exists(line):
-                                self.minidlna_dirs.append({"path": line, "type": "picturesvideo"})
+                            self.minidlna_dirs.append({"path": line, "type": "picturesvideo"})
                         else:
-                            if os.path.exists(line):
-                                self.logger.debug(u"Adding mixed (no-type specified) folder {folder}...".format(folder=line))
-                                self.minidlna_dirs.append({"path": line, "type": "mixed"})
+                            self.logger.debug(u"Adding mixed (no-type specified) folder {folder}...".format(folder=line))
+                            self.minidlna_dirs.append({"path": line, "type": "mixed"})
 
-                if not uuid_file or not friendly_name:
-                    generated_uuid_file = None
-                    generated_friendly_name = None
+                if not uuid_file or not friendly_name or not self.minidlna_port:
+                    fp.write("\n")
                     if not uuid_file:
                         self.logger.info(u"No UUID specified in configuration file; generating one and saving to file...")
-                        generated_uuid_file = uuid.uuid4()
+                        generated_uuid_file = str(uuid.uuid4())
                         self.logger.debug(u"UUID generated: {uuid}".format(uuid=generated_uuid_file))
+                        fp.write(u"uuid={uuid}\n".format(uuid=generated_uuid_file))
                     if not friendly_name:
                         self.logger.info(u"No friendly_name specified in configuration file; generating one and saving to file...")
                         generated_friendly_name = _(u"Multimedia for {user}").format(user=getpass.getuser())
                         self.logger.debug(u"friendly_name generated: {friendly_name}".format(friendly_name=generated_friendly_name))
-                    fp.write("\n")
-                    if generated_uuid_file:
-                        fp.write("uuid={uuid}\n".format(uuid=generated_uuid_file))
-                    if generated_friendly_name:
-                        fp.write("friendly_name={friendly_name}\n".format(friendly_name=generated_friendly_name))
+                        fp.write(u"friendly_name={friendly_name}\n".format(friendly_name=generated_friendly_name))
+                    if not self.minidlna_port:
+                        self.logger.info(u"No port specified in configuration file; generating one and saving to file...")
+                        self.minidlna_port = 8200 + random.randint(1, 99)
+                        self.logger.debug(u"Port generated: {port}".format(port=self.minidlna_port))
+                        fp.write(u"port={port}\n".format(port=self.minidlna_port))
 
 
     def build_menu(self):
@@ -363,6 +462,10 @@ class MiniDLNAIndicator(object):
             self.restart_menuitem.connect('activate', lambda _: self.restart_minidlna_process_nonblocking())
             self.menu.append(self.restart_menuitem)
 
+            self.restart_reindex_menuitem = Gtk.MenuItem(_(u"Restart and reindex MiniDLNA"))
+            self.restart_reindex_menuitem.connect('activate', lambda _: self.restart_minidlna_process_nonblocking(True))
+            self.menu.append(self.restart_reindex_menuitem)
+
             self.stop_menuitem = Gtk.MenuItem(_(u"Stop MiniDLNA"))
             self.stop_menuitem.connect('activate', lambda _: self.stop_minidlna_process_nonblocking())
             self.menu.append(self.stop_menuitem)
@@ -384,10 +487,11 @@ class MiniDLNAIndicator(object):
                 }
 
                 for dir_data in self.minidlna_dirs:
-
+                    sensitive =  os.path.exists(dir_data["path"]) and os.path.isdir(dir_data["path"]) and os.access(dir_data["path"], os.R_OK)
                     display_type = "[" + mappings.get(dir_data["type"])["display"] + "] "
                     dir_menuitem = Gtk.MenuItem(u"{display_type}{path}".format(display_type=display_type, path=dir_data["path"]))
                     dir_menuitem.connect('activate', self.run_xdg_open, dir_data["path"])
+                    dir_menuitem.set_sensitive(sensitive)
                     self.menu.append(dir_menuitem)
 
             else:
@@ -469,6 +573,9 @@ class MiniDLNAIndicator(object):
 
     def set_gnome_autostart(self, enabled):
         if enabled:
+            if not os.path.exists(GNOME_AUTOSTART_DIR):
+                if os.path.exists(GNOME_CONFIG_DIR):
+                    os.mkdir(GNOME_AUTOSTART_DIR)
             if os.path.exists(GNOME_AUTOSTART_DIR):
                 with codecs.open(MINIDLNA_INDICATOR_GNOME_AUTOSTART_FILE, "w", "utf-8") as f:
                     f.write("[Desktop Entry]\n")
@@ -510,37 +617,22 @@ class MiniDLNAIndicator(object):
         Checks if MiniDLNA is running and calls the method to update the menu items.
         :rtype: void
         """
-        self.logger.debug(u"Checking if MiniDLNA is running...")
-        if self.get_minidlna_pid():
-            is_running = True
-            self.logger.debug(u"MiniDLNA is running...")
-        else:
-            is_running = False
-            self.logger.debug(u"MiniDLNA is NOT running...")
-
         if self.minidlna_path:
-            self.logger.debug(u"Updating menus status...")
-            self.update_menu_status(is_running)
 
+            self.minidlna_running = self.get_minidlna_pid() != 0
 
-    def update_menu_status(self, is_running):
-        """
-        :param is_running: indicates if MiniDLNA is running
-        :type is_running: bool
-        :rtype: void
-        """
-        self.logger.debug(u"Updating menus status according to running is {status}...".format(status=is_running))
-        if is_running:
-            GLib.idle_add(lambda: self.indicator.set_icon_full(MINIDLNA_ICON_GREEN, ""))
-        else:
-            GLib.idle_add(lambda: self.indicator.set_icon_full(MINIDLNA_ICON_GREY, ""))
+            if self.minidlna_running:
+                GLib.idle_add(lambda: self.indicator.set_icon_full(MINIDLNA_ICON_GREEN, ""))
+            else:
+                GLib.idle_add(lambda: self.indicator.set_icon_full(MINIDLNA_ICON_GREY, ""))
 
-        GLib.idle_add(lambda: self.reload_configuration_menuitem.set_sensitive(not is_running))
-        GLib.idle_add(lambda: self.start_menuitem.set_sensitive(not is_running))
-        GLib.idle_add(lambda: self.start_reindex_menuitem.set_sensitive(not is_running))
-        GLib.idle_add(lambda: self.restart_menuitem.set_sensitive(is_running))
-        GLib.idle_add(lambda: self.stop_menuitem.set_sensitive(is_running))
-        GLib.idle_add(lambda: self.weblink_menuitem.set_sensitive(is_running))
+            GLib.idle_add(lambda: self.reload_configuration_menuitem.set_sensitive(not self.minidlna_running))
+            GLib.idle_add(lambda: self.start_menuitem.set_sensitive(not self.minidlna_running))
+            GLib.idle_add(lambda: self.start_reindex_menuitem.set_sensitive(not self.minidlna_running))
+            GLib.idle_add(lambda: self.restart_menuitem.set_sensitive(self.minidlna_running))
+            GLib.idle_add(lambda: self.restart_reindex_menuitem.set_sensitive(self.minidlna_running))
+            GLib.idle_add(lambda: self.stop_menuitem.set_sensitive(self.minidlna_running))
+            GLib.idle_add(lambda: self.weblink_menuitem.set_sensitive(self.minidlna_running))
 
 
     def get_minidlna_pid(self):
@@ -598,16 +690,16 @@ class MiniDLNAIndicator(object):
             self.check_running_and_update_menu_status()
 
 
-    def restart_minidlna_process_nonblocking(self):
+    def restart_minidlna_process_nonblocking(self, reindex=False):
 
-        t = threading.Thread(target=self.restart_minidlna_process_blocking)
+        t = threading.Thread(target=self.restart_minidlna_process_blocking, kwargs={"reindex": reindex})
         t.start()
 
 
-    def restart_minidlna_process_blocking(self):
+    def restart_minidlna_process_blocking(self, reindex=False):
         finished = self.stop_minidlna_process_blocking()
         if finished:
-            self.start_minidlna_process()
+            self.start_minidlna_process(reindex)
 
 
     def stop_minidlna_process_nonblocking(self):
@@ -626,6 +718,7 @@ class MiniDLNAIndicator(object):
             GLib.idle_add(lambda: self.start_menuitem.set_sensitive(False))
             GLib.idle_add(lambda: self.start_reindex_menuitem.set_sensitive(False))
             GLib.idle_add(lambda: self.restart_menuitem.set_sensitive(False))
+            GLib.idle_add(lambda: self.restart_reindex_menuitem.set_sensitive(False))
             GLib.idle_add(lambda: self.stop_menuitem.set_sensitive(False))
             GLib.idle_add(lambda: self.weblink_menuitem.set_sensitive(False))
 
@@ -645,8 +738,8 @@ class MiniDLNAIndicator(object):
                         finished = True
                         break
                     else:
-                        # Wait 100 ms
-                        time.sleep(100.0 / 1000.0)
+                        # Wait 500 ms
+                        time.sleep(0.5)
 
                 if not finished:
                     self.logger.warn(u"MiniDLNA has not finished after the kill signal in the allowed time.")
@@ -665,15 +758,14 @@ class MiniDLNAIndicator(object):
         subprocess.call(["xdg-open", uri])
 
 
-    def quit_control_c(self, signal, frame):
-        self.quit(None)
-
-
     def quit(self, source):
+        # self.mounted_device_monitor.stop()
+        self.background_minidlna_running_status_changes_stopevent.set()
+        self.background_minidlna_running_status_changes_thread.join()
         if self.config.stop_minidlna_exit_indicator:
             self.stop_minidlna_process_blocking()
         Notify.uninit()
-        Gtk.main_quit()
+        self.mainloop.quit()
 
 
 class MiniDLNAIndicatorConfig(object):
@@ -710,9 +802,7 @@ class MiniDLNAIndicatorConfig(object):
 
 if __name__ == "__main__":
 
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
-
-    if not os.path.exists(MINIDLNA_CONFIG_FILE):
+    if not os.path.exists(MINIDLNA_CONFIG_DIR):
         os.mkdir(MINIDLNA_CONFIG_DIR)
 
     script_name = os.path.splitext(os.path.basename(__file__))[0]
@@ -761,16 +851,5 @@ if __name__ == "__main__":
         logging.getLogger(MiniDLNAIndicatorConfig.__name__).setLevel(logging.DEBUG)
         logging.getLogger(__name__).setLevel(logging.DEBUG)
 
-    """
-    logger = logging.getLogger(__name__)
-    locale_name = locale.getlocale()[0]
-    if locale_name is not None:
-        logger.info("Locale set to '%s'" % locale_name)
-        locale_name = locale_name.split('_')[0]
-    else:
-        logger.info("Locale undefined, using C Locale")
-        locale.setlocale(locale.LC_ALL, 'C')  # use default (C) locale
-        locale_name = "en"
-    """
-
     MiniDLNAIndicator()
+

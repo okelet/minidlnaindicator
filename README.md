@@ -12,14 +12,26 @@ Some of the features this indicator provides are:
   ([check this](https://spremi.wordpress.com/2014/06/30/minidlna-multiple-instances/) to know the problem about uuid)
 * Auto configuration when first run (adding the pictures, music, videos and downloads folder
 of the user, if the exist, and generating a random, non-default, port)
+* Restart of the process when a external USB drive is connected/disconnected, and it contains media folders, so MiniDLNA
+can realize of this.
 
 Tested on [Ubuntu 16.04 (Xenial Xerus)](http://www.ubuntu.com) and [Linux Mint 17.3 (Rosa)](https://www.linuxmint.com)
-with Python 2.7; some changes needed to run with Python 3 (see TODO).
+with Python 2.7; some changes needed to run with Python 3 (see [TODO](#TODO)).
 
 Tested from these devices (tests from more devices are welcome):
  
 * [Samsung UE32F5500 TV](http://www.samsung.com/nl/consumer/tv-audio-video/televisions/led-tv/UE32F5500AWXXN)
 * [Android BubbleUPnP](https://play.google.com/store/apps/details?id=com.bubblesoft.android.bubbleupnp)
+
+
+## Requirements
+
+You will need this software to run the indicator, considering a standard initial installation of Ubuntu 16.04:
+
+```
+sudo apt install minidlna python-pip python-gobject python-yaml
+sudo pip install pydbus
+```
 
 
 ## Instalation
@@ -36,6 +48,12 @@ python2 minidlnaindicator.py &
 
 The application will create a launcher in the menu in its first run.
 
+If you already have downloaded the repo and you want to update it, just run this command from the directory it has been downloaded:
+
+```
+git pull
+```
+
 
 ## Configuration
 
@@ -47,16 +65,15 @@ The default application configuration, will launch the MiniDLNA process when the
 be stopped when the indicator finishes. Also, the own indicator will configure itself to run on every user logon.
 All these 3 settings can be changed from the indicator configuration menu.
 
-The MiniDLNA configuration has to be done by hand, but there are some shotcuts to open the file and edit it. You can also
+The MiniDLNA configuration has to be done by hand, but there are some shortcuts to open the file and edit it. You can also
 open from the menu the LOG. If you change the configuration, please remember to restart the MiniDLNA process.
-
 
 
 ## TODO
 
 * Translators needed
 * Update system (from GitHub?)
-* Detect external MiniDLAN configuration changes
+* Detect external MiniDLNA configuration changes
 * Allow some basic MiniDLNA configuration (media folders, port)
 * Detect errors when launching the process (MiniDLNA returns 0 even when it exits because other
   application is listening in the same port); note, possible solution: when running in foreground

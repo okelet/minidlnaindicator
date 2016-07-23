@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2016-05-27 18:58+CEST\n"
+"POT-Creation-Date: 2016-07-23 13:43+CEST\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,139 +15,143 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: minidlnaindicator.py:128
+#: minidlnaindicator.py:160
 msgid "MiniDLNA not installed"
 msgstr ""
 
-#: minidlnaindicator.py:129
+#: minidlnaindicator.py:161
 msgid "MiniDLNA is not installed; please, click in the menu to install it."
 msgstr ""
 
-#: minidlnaindicator.py:144 minidlnaindicator.py:477
+#: minidlnaindicator.py:258 minidlnaindicator.py:575
 msgid "MiniDLNA Indicator"
 msgstr ""
 
-#: minidlnaindicator.py:147 minidlnaindicator.py:480
+#: minidlnaindicator.py:261 minidlnaindicator.py:578
 msgid "Indicator for launching MiniDLNA as a normal user"
 msgstr ""
 
-#: minidlnaindicator.py:202 minidlnaindicator.py:321
+#: minidlnaindicator.py:316 minidlnaindicator.py:418
 msgid "Multimedia for {user}"
 msgstr ""
 
-#: minidlnaindicator.py:336
+#: minidlnaindicator.py:429
 msgid "MiniDLNA is not installed"
 msgstr ""
 
-#: minidlnaindicator.py:340
+#: minidlnaindicator.py:433
 msgid "Install MiniDLNA"
 msgstr ""
 
-#: minidlnaindicator.py:344
+#: minidlnaindicator.py:437
 msgid "Retry discovery"
 msgstr ""
 
-#: minidlnaindicator.py:350
+#: minidlnaindicator.py:443
 msgid "Reload MiniDLNA configuration"
 msgstr ""
 
-#: minidlnaindicator.py:354
+#: minidlnaindicator.py:447
 msgid "Start MiniDLNA"
 msgstr ""
 
-#: minidlnaindicator.py:358
+#: minidlnaindicator.py:451
 msgid "Start and reindex MiniDLNA"
 msgstr ""
 
-#: minidlnaindicator.py:362
+#: minidlnaindicator.py:455
 msgid "Restart MiniDLNA"
 msgstr ""
 
-#: minidlnaindicator.py:366
+#: minidlnaindicator.py:459
+msgid "Restart and reindex MiniDLNA"
+msgstr ""
+
+#: minidlnaindicator.py:463
 msgid "Stop MiniDLNA"
 msgstr ""
 
-#: minidlnaindicator.py:370
+#: minidlnaindicator.py:467
 msgid "Web interface (port {port})"
 msgstr ""
 
-#: minidlnaindicator.py:379
+#: minidlnaindicator.py:476
 msgid "Audio"
 msgstr ""
 
-#: minidlnaindicator.py:380
+#: minidlnaindicator.py:477
 msgid "Pictures"
 msgstr ""
 
-#: minidlnaindicator.py:381
+#: minidlnaindicator.py:478
 msgid "Video"
 msgstr ""
 
-#: minidlnaindicator.py:382
+#: minidlnaindicator.py:479
 msgid "Pictures/Video"
 msgstr ""
 
-#: minidlnaindicator.py:383
+#: minidlnaindicator.py:480
 msgid "Mixed"
 msgstr ""
 
-#: minidlnaindicator.py:394
+#: minidlnaindicator.py:492
 msgid "No media folders specified; please, edit the configuration."
 msgstr ""
 
-#: minidlnaindicator.py:400
+#: minidlnaindicator.py:498
 msgid "Show MiniDLNA LOG"
 msgstr ""
 
-#: minidlnaindicator.py:404
+#: minidlnaindicator.py:502
 msgid "Edit MiniDLNA configuration"
 msgstr ""
 
-#: minidlnaindicator.py:411
+#: minidlnaindicator.py:509
 msgid "Indicator configuration"
 msgstr ""
 
-#: minidlnaindicator.py:415
+#: minidlnaindicator.py:513
 msgid "Autostart indicator"
 msgstr ""
 
-#: minidlnaindicator.py:420
+#: minidlnaindicator.py:518
 msgid "Autostart MiniDLNA"
 msgstr ""
 
-#: minidlnaindicator.py:425
+#: minidlnaindicator.py:523
 msgid "Stop MiniDLNA when exit indicator"
 msgstr ""
 
-#: minidlnaindicator.py:433
+#: minidlnaindicator.py:531
 msgid "Help"
 msgstr ""
 
-#: minidlnaindicator.py:437
+#: minidlnaindicator.py:535
 msgid "MiniDLNA help"
 msgstr ""
 
-#: minidlnaindicator.py:441
+#: minidlnaindicator.py:539
 msgid "MiniDLNA Indicator help"
 msgstr ""
 
-#: minidlnaindicator.py:445
+#: minidlnaindicator.py:543
 msgid "Quit"
 msgstr ""
 
-#: minidlnaindicator.py:654
+#: minidlnaindicator.py:738
 msgid "MiniDLNA not stopped"
 msgstr ""
 
-#: minidlnaindicator.py:655
+#: minidlnaindicator.py:739
 msgid "MiniDLNA has not stopped in the allowed time; perhaps it is slow and will finish later."
 msgstr ""
 
-#: minidlnaindicator.py:725
+#: minidlnaindicator.py:806
 msgid "Show also LOG messages in the error output."
 msgstr ""
 
-#: minidlnaindicator.py:726
+#: minidlnaindicator.py:807
 msgid "Set LOG level to DEBUG"
 msgstr ""
 

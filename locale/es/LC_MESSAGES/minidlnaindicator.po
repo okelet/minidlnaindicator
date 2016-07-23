@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: MiniDLNA Indicator\n"
-"POT-Creation-Date: 2016-05-27 18:58+0200\n"
-"PO-Revision-Date: 2016-05-27 18:59+0200\n"
+"POT-Creation-Date: 2016-07-23 13:44+0200\n"
+"PO-Revision-Date: 2016-07-23 13:44+0200\n"
 "Last-Translator: Juan A. S. <okelet@gmail.com>\n"
 "Language-Team: \n"
 "Language: es\n"
@@ -16,133 +16,137 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 1.8.7.1\n"
 
-#: minidlnaindicator.py:128
+#: minidlnaindicator.py:160
 msgid "MiniDLNA not installed"
 msgstr "MiniDLNA no está instalado"
 
-#: minidlnaindicator.py:129
+#: minidlnaindicator.py:161
 msgid "MiniDLNA is not installed; please, click in the menu to install it."
 msgstr ""
 "MiniDLNA no está instalado; por favor, haga click en el menú para instalarlo."
 
-#: minidlnaindicator.py:144 minidlnaindicator.py:477
+#: minidlnaindicator.py:258 minidlnaindicator.py:575
 msgid "MiniDLNA Indicator"
 msgstr "Indicador de MiniDLNA"
 
-#: minidlnaindicator.py:147 minidlnaindicator.py:480
+#: minidlnaindicator.py:261 minidlnaindicator.py:578
 msgid "Indicator for launching MiniDLNA as a normal user"
 msgstr "Indicador para ejecutar MiniDLNA como un usuario normal"
 
-#: minidlnaindicator.py:202 minidlnaindicator.py:321
+#: minidlnaindicator.py:316 minidlnaindicator.py:418
 msgid "Multimedia for {user}"
 msgstr "Multimedia para {user}"
 
-#: minidlnaindicator.py:336
+#: minidlnaindicator.py:429
 msgid "MiniDLNA is not installed"
 msgstr "MiniDLNA no está instalado"
 
-#: minidlnaindicator.py:340
+#: minidlnaindicator.py:433
 msgid "Install MiniDLNA"
 msgstr "Instalar MiniDLNA"
 
-#: minidlnaindicator.py:344
+#: minidlnaindicator.py:437
 msgid "Retry discovery"
 msgstr "Reintentar descubrimiento"
 
-#: minidlnaindicator.py:350
+#: minidlnaindicator.py:443
 msgid "Reload MiniDLNA configuration"
 msgstr "Recargar configuración de MiniDLNA"
 
-#: minidlnaindicator.py:354
+#: minidlnaindicator.py:447
 msgid "Start MiniDLNA"
 msgstr "Iniciar MiniDLNA"
 
-#: minidlnaindicator.py:358
+#: minidlnaindicator.py:451
 msgid "Start and reindex MiniDLNA"
 msgstr "Iniciar y reindexar MiniDLNA"
 
-#: minidlnaindicator.py:362
+#: minidlnaindicator.py:455
 msgid "Restart MiniDLNA"
 msgstr "Reiniciar MiniDLNA"
 
-#: minidlnaindicator.py:366
+#: minidlnaindicator.py:459
+msgid "Restart and reindex MiniDLNA"
+msgstr "Reiniciar y reindexar MiniDLNA"
+
+#: minidlnaindicator.py:463
 msgid "Stop MiniDLNA"
 msgstr "Detener MiniDLNA"
 
-#: minidlnaindicator.py:370
+#: minidlnaindicator.py:467
 msgid "Web interface (port {port})"
 msgstr "Interfaz web (puerto {port})"
 
-#: minidlnaindicator.py:379
+#: minidlnaindicator.py:476
 msgid "Audio"
 msgstr "Música"
 
-#: minidlnaindicator.py:380
+#: minidlnaindicator.py:477
 msgid "Pictures"
 msgstr "Imágenes"
 
-#: minidlnaindicator.py:381
+#: minidlnaindicator.py:478
 msgid "Video"
 msgstr "Vídeos"
 
-#: minidlnaindicator.py:382
+#: minidlnaindicator.py:479
 msgid "Pictures/Video"
 msgstr "Imágenes/Vídeos"
 
-#: minidlnaindicator.py:383
+#: minidlnaindicator.py:480
 msgid "Mixed"
 msgstr "Varios"
 
-#: minidlnaindicator.py:394
+#: minidlnaindicator.py:492
 msgid "No media folders specified; please, edit the configuration."
 msgstr ""
 "No se ha especificado ningún directorio; por favor, edita la configuración"
 
-#: minidlnaindicator.py:400
+#: minidlnaindicator.py:498
 msgid "Show MiniDLNA LOG"
 msgstr "Ver LOG de MiniDLNA"
 
-#: minidlnaindicator.py:404
+#: minidlnaindicator.py:502
 msgid "Edit MiniDLNA configuration"
 msgstr "Editar configuración de MiniDLNA"
 
-#: minidlnaindicator.py:411
+#: minidlnaindicator.py:509
 msgid "Indicator configuration"
 msgstr "Configuración del indicador"
 
-#: minidlnaindicator.py:415
+#: minidlnaindicator.py:513
 msgid "Autostart indicator"
 msgstr "Autoiniciar indicador"
 
-#: minidlnaindicator.py:420
+#: minidlnaindicator.py:518
 msgid "Autostart MiniDLNA"
 msgstr "Autoiniciar MiniDLNA"
 
-#: minidlnaindicator.py:425
+#: minidlnaindicator.py:523
 msgid "Stop MiniDLNA when exit indicator"
 msgstr "Parar MiniDLNA al cerrar el indicador"
 
-#: minidlnaindicator.py:433
+#: minidlnaindicator.py:531
 msgid "Help"
 msgstr "Ayuda"
 
-#: minidlnaindicator.py:437
+#: minidlnaindicator.py:535
 msgid "MiniDLNA help"
 msgstr "Ayuda de MiniDLNA"
 
-#: minidlnaindicator.py:441
+#: minidlnaindicator.py:539
 msgid "MiniDLNA Indicator help"
 msgstr "Ayuda del indicador de MiniDLNA"
 
-#: minidlnaindicator.py:445
+#: minidlnaindicator.py:543
 msgid "Quit"
 msgstr "Salir"
 
-#: minidlnaindicator.py:654
+#: minidlnaindicator.py:738
 msgid "MiniDLNA not stopped"
 msgstr "MiniDLNA no se ha parado"
 
-#: minidlnaindicator.py:655
+#: minidlnaindicator.py:739
 msgid ""
 "MiniDLNA has not stopped in the allowed time; perhaps it is slow and will "
 "finish later."
@@ -150,11 +154,11 @@ msgstr ""
 "MiniDLNA no se ha parado correctamente en el tiempo esperado; posiblemente "
 "vaya lento y termine de pararse un poco más tarde."
 
-#: minidlnaindicator.py:725
+#: minidlnaindicator.py:806
 msgid "Show also LOG messages in the error output."
 msgstr "Muestra los mensajes de LOG también por la salida de error."
 
-#: minidlnaindicator.py:726
+#: minidlnaindicator.py:807
 msgid "Set LOG level to DEBUG"
 msgstr "Establece el nivel de LOG a DEBUG"
 
