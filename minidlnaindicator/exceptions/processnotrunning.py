@@ -1,0 +1,3 @@
+
+class ProcessNotRunningException(Exception):
+    pass

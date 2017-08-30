@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=MiniDLNA Indicator
+GenericName=MiniDLNA Indicator
+Exec=minidlnaindicator
+Icon=minidlnaindicator
+Terminal=false
+Categories=Network;GTK;
+
+Comment=Indicator for launching MiniDLNA as a normal user
+Comment[es]=Indicador para ejecutar MiniDLNA como un usuario normal

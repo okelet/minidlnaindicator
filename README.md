@@ -12,11 +12,9 @@ Some of the features this indicator provides are:
   ([check this](https://spremi.wordpress.com/2014/06/30/minidlna-multiple-instances/) to know the problem about uuid)
 * Auto configuration when first run (adding the pictures, music, videos and downloads folder
 of the user, if the exist, and generating a random, non-default, port)
-* Restart of the process when a external USB drive is connected/disconnected, and it contains media folders, so MiniDLNA
-can realize of this.
 
 Tested on [Ubuntu 16.04 (Xenial Xerus)](http://www.ubuntu.com) and [Linux Mint 17.3 (Rosa)](https://www.linuxmint.com)
-with Python 2.7; some changes needed to run with Python 3 (see [TODO](#TODO)).
+with Python 3.5.
 
 Tested from these devices (tests from more devices are welcome):
  
@@ -29,8 +27,7 @@ Tested from these devices (tests from more devices are welcome):
 You will need this software to run the indicator, considering a standard initial installation of Ubuntu 16.04:
 
 ```
-sudo apt install minidlna python-pip python-gobject python-yaml
-sudo pip install pydbus
+sudo apt install minidlna python3-pip python3-gi python-yaml
 ```
 
 
@@ -38,21 +35,14 @@ sudo pip install pydbus
 
 No `deb` or `rpm` packages available; only from Github; if someone wants to contribute, it will be welcome.
 
-To download and run the application, execute this commands:
+Although the application is ready to publish it on PyPi, and perhaps, it would be easy to create a `deb` or `rpm`, 
+installation, must be done using `pip` with this repository:
 
 ```
-git clone https://github.com/okelet/minidlnaindicator
-cd minidlnaindicator
-python2 minidlnaindicator.py &
+python3 -m pip install --upgrade --user git+https://github.com/okelet/minidlnaindicator.git
 ```
 
-The application will create a launcher in the menu in its first run.
-
-If you already have downloaded the repo and you want to update it, just run this command from the directory it has been downloaded:
-
-```
-git pull
-```
+`pip` will create a shortcut in the applications menu.
 
 
 ## Configuration
@@ -75,10 +65,15 @@ open from the menu the LOG. If you change the configuration, please remember to 
 * Update system (from GitHub?)
 * Detect external MiniDLNA configuration changes
 * Allow some basic MiniDLNA configuration (media folders, port)
-* Detect errors when launching the process (MiniDLNA returns 0 even when it exits because other
-  application is listening in the same port); note, possible solution: when running in foreground
-  mode (`-S` parameter), MiniDLNA does return 255 in case of problems.
-* Make it run with Python 2 and 3
+
+
+## Type checking
+
+Validated with MyPy:
+
+```
+mypy --python-version 3.5 --ignore-missing-imports --strict . 
+```
 
 
 ## Me

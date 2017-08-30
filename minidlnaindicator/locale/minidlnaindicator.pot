@@ -1,0 +1,179 @@
+# Translations template for PROJECT.
+# Copyright (C) 2017 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2017.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2017-08-30 23:54+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.0\n"
+
+#: minidlnaindicator/indicator.py:65
+msgid "No D-Bus connection"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:93
+msgid "MiniDLNA not installed; click here to install"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:96
+msgid "Start MiniDLNA"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:99
+msgid "Start and reindex MiniDLNA"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:102
+msgid "Restart MiniDLNA"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:105
+msgid "Restart and reindex MiniDLNA"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:108
+msgid "Stop MiniDLNA"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:111
+msgid "Web interface (port {port})"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:114
+msgid "Show MiniDLNA LOG"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:117
+msgid "Edit MiniDLNA configuration"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:120
+msgid "Autostart indicator"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:124
+msgid "MiniDLNA help"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:127
+msgid "MiniDLNA Indicator help"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:130
+msgid "Quit"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:243
+msgid "Directory does not exist"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:247
+msgid "No media folders specified; please, edit the configuration."
+msgstr ""
+
+#: minidlnaindicator/indicator.py:299
+msgid "MiniDLNA Indicator"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:302
+msgid "Indicator for launching MiniDLNA as a normal user"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:348
+msgid "MiniDLNA error"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:349
+msgid "MiniDLNA has exited with a code {code} and this text {text}."
+msgstr ""
+
+#: minidlnaindicator/indicator.py:355
+msgid "Error running MiniDLNA"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:372 minidlnaindicator/indicator.py:377
+msgid "MiniDLNA not installed"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:372
+msgid "MiniDLNA is not installed."
+msgstr ""
+
+#: minidlnaindicator/indicator.py:378
+msgid "MiniDLNA is not installed. Do you want to install it?"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:438
+msgid "MiniDLNA not stopped"
+msgstr ""
+
+#: minidlnaindicator/indicator.py:439
+msgid ""
+"MiniDLNA has not stopped in the allowed time; perhaps it is slow and will"
+" finish later."
+msgstr ""
+
+#: minidlnaindicator/indicator.py:486
+msgid "Application already running."
+msgstr ""
+
+#: minidlnaindicator/minidlnaconfig.py:80
+#: minidlnaindicator/minidlnaconfig.py:92
+#: minidlnaindicator/minidlnaconfig.py:208
+msgid "Multimedia for {user}"
+msgstr ""
+
+#: minidlnaindicator/minidlnaconfig.py:248
+msgid "Audio"
+msgstr ""
+
+#: minidlnaindicator/minidlnaconfig.py:250
+msgid "Video"
+msgstr ""
+
+#: minidlnaindicator/minidlnaconfig.py:252
+msgid "Pictures"
+msgstr ""
+
+#: minidlnaindicator/minidlnaconfig.py:254
+msgid "Pictures/Video"
+msgstr ""
+
+#: minidlnaindicator/minidlnaconfig.py:256
+msgid "Mixed"
+msgstr ""
+
+#: minidlnaindicator/minidlnaconfig.py:258
+msgid "Unknown"
+msgstr ""
+
+#: minidlnaindicator/ui/utils_ui.py:16
+msgid "Error"
+msgstr ""
+
+#: minidlnaindicator/ui/utils_ui.py:17
+msgid "Information"
+msgstr ""
+
+#: minidlnaindicator/ui/utils_ui.py:18
+msgid "Warning"
+msgstr ""
+
+#: minidlnaindicator/ui/utils_ui.py:19
+msgid "Question"
+msgstr ""
+
+#: minidlnaindicator/ui/utils_ui.py:57
+msgid "Data input"
+msgstr ""
+
