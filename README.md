@@ -1,6 +1,8 @@
 
 # MiniDLNA Indicator
 
+[![Code Health](https://landscape.io/github/okelet/minidlnaindicator/master/landscape.svg?style=flat)](https://landscape.io/github/okelet/minidlnaindicator/master)
+
 This indicator allows you to launch an instance of [MiniDLNA](https://help.ubuntu.com/community/MiniDLNA)
 as a normal user, without the need to edit configuration files as `root`, or restart by command the
 application if you have changed the configuration.
@@ -13,8 +15,15 @@ Some of the features this indicator provides are:
 * Auto configuration when first run (adding the pictures, music, videos and downloads folder
 of the user, if the exist, and generating a random, non-default, port)
 
-Tested on [Ubuntu 16.04 (Xenial Xerus)](http://www.ubuntu.com) and [Linux Mint 17.3 (Rosa)](https://www.linuxmint.com)
-with Python 3.5.
+Tested operating systems:
+
+- [Ubuntu 16.04 (Xenial Xerus)](http://www.ubuntu.com)
+- [Linux Mint 17.3 (Rosa)](https://www.linuxmint.com)
+- [Fedora 26](https://getfedora.org) (with `libappindicator-gtk3` package and [KStatusNotifierItem/AppIndicator Support](https://extensions.gnome.org/extension/615/appindicator-support/) Gnome Shell extension)
+
+It should work with any operating system that supports Python 3.5+, AppIndicator and the required dependencies. If you have problems,
+please, open an issue.
+
 
 Tested from these devices (tests from more devices are welcome):
  
@@ -27,7 +36,7 @@ Tested from these devices (tests from more devices are welcome):
 You will need this software to run the indicator, considering a standard initial installation of Ubuntu 16.04:
 
 ```
-sudo apt install minidlna python3-pip python3-gi python-yaml
+sudo apt install minidlna python3-pip python3-gi python3-yaml python3-psutil
 ```
 
 
