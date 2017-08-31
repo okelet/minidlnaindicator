@@ -15,7 +15,7 @@ import uuid
 from gi.repository import GLib
 
 from .constants import MINIDLNA_CACHE_DIR, MINIDLNA_CONFIG_DIR, MINIDLNA_LOG_FILENAME, MINIDLNA_CONFIG_FILE, \
-    APPINDICATOR_ID, LOCALE_DIR, MINIDLNA_LOG_PATH
+    APPINDICATOR_ID, LOCALE_DIR
 
 _ = gettext.translation(APPINDICATOR_ID, LOCALE_DIR, fallback=True).gettext
 

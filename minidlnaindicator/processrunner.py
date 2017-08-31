@@ -7,7 +7,7 @@ import subprocess
 import threading
 import time
 
-from .constants import MINIDLNA_CONFIG_FILE, APPINDICATOR_ID, LOCALE_DIR
+from .constants import APPINDICATOR_ID, LOCALE_DIR
 from .processlistener import ProcessListener
 from .exceptions.processstop import ProcessStopException
 from .exceptions.processnotrunning import ProcessNotRunningException
