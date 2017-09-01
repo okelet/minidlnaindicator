@@ -31,6 +31,15 @@ Tested from these devices (tests from more devices are welcome):
 * [Android BubbleUPnP](https://play.google.com/store/apps/details?id=com.bubblesoft.android.bubbleupnp)
 
 
+## What is MiniDLNA?
+
+In brief, MiniDLNA is a small program that allows you to share multimedia content (audio, video, pictures, etc.) easily with
+[DLNA](https://en.wikipedia.org/wiki/Digital_Living_Network_Alliance)/[UPnP](https://en.wikipedia.org/wiki/Universal_Plug_and_Play)
+compatible devices (for example, smart TVs, phones, XBMC, etc.). This also could be done with some type of share services,
+like Windows/Samba/CIFS, NFS, etc. but DLNA is easier to configure (you just need to run the program and select the folders 
+you want to share); it is faster, no need to configure security. 
+
+
 ## Requirements
 
 You will need this software to run the indicator, considering a standard initial installation of Ubuntu 16.04:
