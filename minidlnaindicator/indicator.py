@@ -446,13 +446,20 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
 
     def quit(self, menu_item: Gtk.MenuItem) -> None:
 
+        self.logger.debug("Exiting...")
+
+        self.logger.debug("Stopping FS monitor thread...")
         if self.fs_monitor.is_alive():
             self.fs_monitor.stop()
 
+        self.logger.debug("Stopping MiniDLNA runner thread...")
         if self.runner.is_running():
             self.stop_minidlna_process_blocking()
 
+        self.logger.debug("Stopping Notify...")
         Notify.uninit()
+
+        self.logger.debug("Exiting main loop...")
         self.mainloop.quit()
 
 
