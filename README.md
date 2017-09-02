@@ -92,6 +92,24 @@ Indicator menu (in spanish):
 ![Indicator menu](screenshot_spanish.png)
 
 
+# License
+
+I don't know. This is a very small program done for myself and published just to help other people with the same problems. 
+
+In brief, this is my idea. You can use the program freely; you don't have to pay me or somebody anything.
+You can modify it, and redistribute it, as long as you keep this "license", attach the base source code,
+and mention the original author (me).
+
+Anyway, I wish (but this is not mandatory, as long as you accomplish the previous sentence) there weren't lots of forks spread over Internet,
+so, I would prefer if you have fixes or new features, do a pull request; this is something just to have the code centralized
+and ordered; I hate when I search a program or library and there are lots of forks, each one with different fixes or features.   
+
+Additionaly, as I do, you can't sell this program or get any economic benefit of it.
+
+If you like the program, you can send a bottle of good wine (I don't like beer 😊).
+
+Fixes or suggestions about this "license" are welcome.
+
 
 ## TODO
 
