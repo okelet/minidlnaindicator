@@ -7,6 +7,7 @@ import argparse
 import dbus
 from dbus.service import Object
 from dbus.mainloop.glib import DBusGMainLoop
+import distro
 import codecs
 import logging
 import logging.config
@@ -87,8 +88,14 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
         self.menu = Gtk.Menu()
         self.indicator.set_menu(self.menu)
 
-        self.detect_menuitem = Gtk.MenuItem(_("MiniDLNA not installed; click here to install"))
-        self.detect_menuitem.connect('activate', lambda _: self.detect_minidlna(auto_start=True, ask_for_install=True))
+        if distro.id() in ["fedora", "centos", "rhel"]:
+            self.detect_menuitem = Gtk.MenuItem(_("MiniDLNA not installed; click here to show how to install"))
+            self.detect_menuitem.connect('activate', lambda _: self.run_xdg_open(None, "https://github.com/okelet/minidlnaindicator"))
+        elif distro.id() in ["ubuntu", "mint"]:
+            self.detect_menuitem = Gtk.MenuItem(_("MiniDLNA not installed; click here to install"))
+            self.detect_menuitem.connect('activate', lambda _: self.detect_minidlna(auto_start=True, ask_for_install=True))
+        else:
+            self.detect_menuitem = Gtk.MenuItem(_("MiniDLNA not installed"))
 
         self.start_menuitem = Gtk.MenuItem(_("Start MiniDLNA"))
         self.start_menuitem.connect('activate', lambda _: self.start_minidlna_process())

@@ -19,7 +19,7 @@ Tested operating systems:
 
 - [Ubuntu 16.04 (Xenial Xerus)](http://www.ubuntu.com)
 - [Linux Mint 17.3 (Rosa)](https://www.linuxmint.com)
-- [Fedora 26](https://getfedora.org) (with `libappindicator-gtk3` package and [KStatusNotifierItem/AppIndicator Support](https://extensions.gnome.org/extension/615/appindicator-support/) Gnome Shell extension)
+- [Fedora 26](https://getfedora.org) (with the [KStatusNotifierItem/AppIndicator Support](https://extensions.gnome.org/extension/615/appindicator-support/) Gnome Shell extension)
 
 It should work with any operating system that supports Python 3.5+, AppIndicator and the required dependencies. If you have problems,
 please, open an issue.
@@ -42,10 +42,22 @@ you want to share); it is faster, no need to configure security.
 
 ## Requirements
 
-You will need this software to run the indicator, considering a standard initial installation of Ubuntu 16.04:
+You will need this software to run the indicator, considering a standard initial installation of Ubuntu/Mint:
 
-```
+```bash
 sudo apt install minidlna python3-setuptools python3-pip python3-gi python3-yaml python3-psutil
+```
+
+For Fedora, you will need [RPM Fusion]() repository:
+
+```bash
+sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+```
+
+And then install these dependencies:
+
+```bash
+sudo dnf install minidlna python3-setuptools python3-pip python3-gobject python3-yaml python3-psutil libappindicator-gtk3
 ```
 
 
@@ -102,7 +114,7 @@ and mention the original author (me).
 
 Anyway, I wish (but this is not mandatory, as long as you accomplish the previous sentence) there weren't lots of forks spread over Internet,
 so, I would prefer if you have fixes or new features, do a pull request; this is something just to have the code centralized
-and ordered; I hate when I search a program or library and there are lots of forks, each one with different fixes or features.   
+and ordered; I hate when I search a program or library and there are lots of forks, each one with different fixes or features.
 
 Additionaly, as I do, you can't sell this program or get any economic benefit of it.
 

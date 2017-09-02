@@ -40,7 +40,8 @@ setup(
     long_description_markdown_filename='README.md',
     install_requires=[
         # "yaml",
-        "psutil"
+        "psutil",
+        "distro",
     ],
     entry_points = {
         'gui_scripts': [
