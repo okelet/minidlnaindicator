@@ -48,7 +48,7 @@ You will need this software to run the indicator, considering a standard initial
 sudo apt install minidlna python3-setuptools python3-pip python3-gi python3-yaml python3-psutil
 ```
 
-For Fedora, you will need [RPM Fusion]() repository:
+For Fedora, you will need [RPM Fusion](https://rpmfusion.org/) repository:
 
 ```bash
 sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
