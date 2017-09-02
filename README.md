@@ -45,7 +45,7 @@ you want to share); it is faster, no need to configure security.
 You will need this software to run the indicator, considering a standard initial installation of Ubuntu 16.04:
 
 ```
-sudo apt install minidlna python3-pip python3-gi python3-yaml python3-psutil
+sudo apt install minidlna python3-setuptools python3-pip python3-gi python3-yaml python3-psutil
 ```
 
 

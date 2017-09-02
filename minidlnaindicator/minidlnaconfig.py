@@ -80,7 +80,6 @@ class MiniDLNAConfig(object):
                 download_dir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOWNLOAD)
                 if download_dir:
                     if download_dir != home_dir:
-                        download_dir = download_dir.decode('utf-8')
                         self.logger.debug("Adding folder {folder} as downloads...".format(folder=download_dir))
                         f.write("media_dir={media_dir}\n".format(media_dir=download_dir))
                         self.dirs.append(MiniDLNADirectory(download_dir, MiniDLNAMediaType.MIXED))
@@ -92,7 +91,6 @@ class MiniDLNAConfig(object):
                 pictures_dir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES)
                 if pictures_dir:
                     if pictures_dir != home_dir:
-                        pictures_dir = pictures_dir.decode('utf-8')
                         self.logger.debug("Adding folder {folder} as pictures...".format(folder=pictures_dir))
                         f.write("media_dir=P,{media_dir}\n".format(media_dir=pictures_dir))
                         self.dirs.append(MiniDLNADirectory(pictures_dir, MiniDLNAMediaType.PICTURES))
@@ -104,7 +102,6 @@ class MiniDLNAConfig(object):
                 music_dir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_MUSIC)
                 if music_dir:
                     if music_dir != home_dir:
-                        music_dir = music_dir.decode('utf-8')
                         self.logger.debug("Adding folder {folder} as music...".format(folder=music_dir))
                         f.write("media_dir=A,{media_dir}\n".format(media_dir=music_dir))
                         self.dirs.append(MiniDLNADirectory(music_dir, MiniDLNAMediaType.AUDIO))
@@ -116,7 +113,6 @@ class MiniDLNAConfig(object):
                 videos_dir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_VIDEOS)
                 if videos_dir:
                     if videos_dir != home_dir:
-                        videos_dir = videos_dir.decode('utf-8')
                         self.logger.debug("Adding folder {folder} as videos...".format(folder=videos_dir))
                         f.write("media_dir=V,{media_dir}\n".format(media_dir=videos_dir))
                         self.dirs.append(MiniDLNADirectory(videos_dir, MiniDLNAMediaType.VIDEO))
