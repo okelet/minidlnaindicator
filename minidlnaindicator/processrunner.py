@@ -28,7 +28,7 @@ class ProcessRunner(object):
 
 
     def add_listener(self, listener: ProcessListener) -> bool:
-        if not listener in self._listeners:
+        if listener not in self._listeners:
             self._listeners.append(listener)
             return True
         return False

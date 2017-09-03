@@ -158,6 +158,9 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
         else:
             self.logger.debug("Startup: NOT Auto-Starting MiniDLNA because not found.")
 
+
+    def run(self):
+
         # http://stackoverflow.com/questions/16410852/keyboard-interrupt-with-with-python-gtk
         self.mainloop = GObject.MainLoop()
         try:
@@ -278,7 +281,7 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
         self.run_xdg_open(menu_item, MINIDLNA_CONFIG_FILE)
 
 
-    def indicator_startup_menuitem_toggled(self, menu_item: Gtk.MenuItem) -> None:
+    def indicator_startup_menuitem_toggled(self, _: Gtk.MenuItem) -> None:
         if self.indicator_startup_menuitem.get_active():
             self.config.startup_indicator = True
         else:
@@ -455,11 +458,11 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
         return killed
 
 
-    def run_xdg_open(self, menu_item: Gtk.MenuItem, uri: str) -> None:
+    def run_xdg_open(self, _: Gtk.MenuItem, uri: str) -> None:
         subprocess.call(["xdg-open", uri])
 
 
-    def quit(self, menu_item: Gtk.MenuItem) -> None:
+    def quit(self, _: Gtk.MenuItem) -> None:
 
         self.logger.debug("Exiting...")
 
@@ -500,8 +503,8 @@ def main() -> None:
     DBusGMainLoop(set_as_default=True)
     try:
         app = MiniDLNAIndicator()
-        # app.run()
-    except AlreadyRunningException as ex:
+        app.run()
+    except AlreadyRunningException as _:
         logger.info("Application already running.")
         print(_("Application already running."))
         sys.exit(0)

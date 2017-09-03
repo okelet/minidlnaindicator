@@ -215,10 +215,7 @@ class MiniDLNAMediaType(enum.Enum):
 
 
 class MiniDLNADirectory(object):
-    """
-    :type path: str
-    :type media_type: MiniDLNAMediaType
-    """
+
     def __init__(self, path: str, media_type: MiniDLNAMediaType) -> None:
         self.path = path
         self.media_type = media_type

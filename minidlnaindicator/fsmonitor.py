@@ -22,7 +22,7 @@ class FSMonitorThread(threading.Thread):
 
 
     def add_listener(self, listener: FSListener) -> bool:
-        if not listener in self._listeners:
+        if listener not in self._listeners:
             self._listeners.append(listener)
             return True
         return False
@@ -45,7 +45,7 @@ class FSMonitorThread(threading.Thread):
 
             current_filesystems = sorted([x.mountpoint for x in psutil.disk_partitions()])
 
-            if previous_filesystems != None and previous_filesystems != current_filesystems:
+            if previous_filesystems is not None and previous_filesystems != current_filesystems:
                 self._logger.debug(
                     "Detected FS change; old: %s; new: %s; notifying...",
                     previous_filesystems,
