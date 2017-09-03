@@ -60,6 +60,14 @@ And then install these dependencies:
 sudo dnf install minidlna python3-setuptools python3-pip python3-gobject python3-yaml python3-psutil libappindicator-gtk3
 ```
 
+Also remember to install the [KStatusNotifierItem/AppIndicator Support](https://extensions.gnome.org/extension/615/appindicator-support/) Gnome Shell extension
+from the web or using these commands:
+
+```bash
+sudo dnf install chrome-gnome-shell gnome-tweak-tool jq
+curl -s https://raw.githubusercontent.com/okelet/minidlnaindicator/master/gnome-ext-install.md | bash -s -- install appindicatorsupport@rgcjonas.gmail.com
+```
+
 
 ## Instalation
 
@@ -69,7 +77,7 @@ Although the application is ready to publish it on PyPi, and perhaps, it would b
 installation, must be done using `pip` with this repository:
 
 ```
-python3 -m pip install --upgrade --user git+https://github.com/okelet/minidlnaindicator.git
+python3 -m pip install --user git+https://github.com/okelet/minidlnaindicator.git
 ```
 
 `pip` will create a shortcut in the applications menu.
