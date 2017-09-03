@@ -504,7 +504,7 @@ def main() -> None:
     try:
         app = MiniDLNAIndicator()
         app.run()
-    except AlreadyRunningException as _:
+    except AlreadyRunningException as _ex:
         logger.info("Application already running.")
         print(_("Application already running."))
         sys.exit(0)
