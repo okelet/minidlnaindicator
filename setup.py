@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='minidlnaindicator',
-    version='0.1',
+    version='0.2',
     description='MiniDLNA Indicator',
     classifiers=[
         'Development Status :: 3 - Alpha',
