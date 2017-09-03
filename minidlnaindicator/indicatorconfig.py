@@ -22,7 +22,7 @@ class MiniDLNAIndicatorConfig(object):
             with codecs.open(self.filename, "r", "utf-8") as f:
                 data = yaml.load(f)
                 self.startup_indicator = data.get("startup_indicator", False)
-                self.logger.debug("Startup indicator: {value}".format(value=self.startup_indicator))
+                self.logger.debug("Startup indicator: %s", self.startup_indicator)
         else:
             self.logger.info("Config file doesn't exist.")
 

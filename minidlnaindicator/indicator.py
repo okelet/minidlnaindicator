@@ -93,9 +93,10 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
             self.detect_menuitem.connect('activate', lambda _: self.run_xdg_open(None, "https://github.com/okelet/minidlnaindicator"))
         elif distro.id() in ["ubuntu", "mint"]:
             self.detect_menuitem = Gtk.MenuItem(_("MiniDLNA not installed; click here to install"))
-            self.detect_menuitem.connect('activate', lambda _: self.detect_minidlna(auto_start=True, ask_for_install=True))
+            self.detect_menuitem.connect('activate', lambda _: self.detect_minidlna(auto_start=True, install_method="apturl"))
         else:
-            self.detect_menuitem = Gtk.MenuItem(_("MiniDLNA not installed"))
+            self.detect_menuitem = Gtk.MenuItem(_("MiniDLNA not installed; click here to show how to install"))
+            self.detect_menuitem.connect('activate', lambda _: self.run_xdg_open(None, "https://github.com/okelet/minidlnaindicator"))
 
         self.start_menuitem = Gtk.MenuItem(_("Start MiniDLNA"))
         self.start_menuitem.connect('activate', lambda _: self.start_minidlna_process())
@@ -363,18 +364,18 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
 
     def on_fs_changed(self, new_filesystems: List[str]) -> None:
         # raise NotImplementedError()
-        self.logger.debug("Recevived notification of FS changed: {new_filesystems}.".format(new_filesystems=new_filesystems))
+        self.logger.debug("Recevived notification of FS changed: %s.", new_filesystems)
         self.rebuild_menu()
 
 
-    def detect_minidlna(self, auto_start: bool=False, ask_for_install: bool=False) -> None:
+    def detect_minidlna(self, auto_start: bool=False, install_method: Optional[str]=None) -> None:
 
         self.minidlna_path = shutil.which("minidlnad")
         self.rebuild_menu()
 
         if not self.minidlna_path:
             self.show_notification(_("MiniDLNA not installed"), _("MiniDLNA is not installed."))
-            if ask_for_install:
+            if install_method == "apturl":
                 apturl_path = shutil.which("apturl")
                 if apturl_path:
                     if msgconfirm(
@@ -389,10 +390,18 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
                             if auto_start:
                                 self.start_minidlna_process()
                         else:
-                            self.logger.error("Error running apturl: PID: {pid}, exit code: {exit_code}, stdout: {std_out}, stderr: {std_err}.".format(pid=pid, exit_code=exit_code, std_out=std_out, std_err=std_err))
+                            self.logger.error(
+                                "Error running apturl: PID: %s, exit code: %s, stdout: %s, stderr: %s.",
+                                pid,
+                                exit_code,
+                                std_out,
+                                std_err
+                            )
                 else:
                     self.logger.warning("Couldn't find apturl.")
 
+            elif install_method:
+                self.logger.error("Unknown install method: %s", install_method)
 
     def start_minidlna_process(self, reindex: bool=False) -> None:
 

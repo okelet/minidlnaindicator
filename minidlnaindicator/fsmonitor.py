@@ -46,7 +46,11 @@ class FSMonitorThread(threading.Thread):
             current_filesystems = sorted([x.mountpoint for x in psutil.disk_partitions()])
 
             if previous_filesystems != None and previous_filesystems != current_filesystems:
-                self._logger.debug("Detected FS change; old: {previous_filesystems}; new: {current_filesystems}; notifying...".format(previous_filesystems=previous_filesystems, current_filesystems=current_filesystems))
+                self._logger.debug(
+                    "Detected FS change; old: %s; new: %s; notifying...",
+                    previous_filesystems,
+                    current_filesystems
+                )
                 for listener in self._listeners:
                     listener.on_fs_changed(current_filesystems)
 

@@ -45,11 +45,11 @@ class MiniDLNAConfig(object):
         self.log = None
 
         if not os.path.exists(MINIDLNA_CONFIG_DIR):
-            self.logger.debug("Creating config dir: {config_dir}...".format(config_dir=MINIDLNA_CONFIG_DIR))
+            self.logger.debug("Creating config dir: %s...", MINIDLNA_CONFIG_DIR)
             os.mkdir(MINIDLNA_CONFIG_DIR)
 
         if not os.path.exists(MINIDLNA_CACHE_DIR):
-            self.logger.debug("Creating cache dir: {cache_dir}...".format(cache_dir=MINIDLNA_CACHE_DIR))
+            self.logger.debug("Creating cache dir: %s...", MINIDLNA_CACHE_DIR)
             os.mkdir(MINIDLNA_CACHE_DIR)
 
         last_modification = None
@@ -60,7 +60,7 @@ class MiniDLNAConfig(object):
             self.logger.debug("Config won't be reloaded because it hasn't changed.")
             return
 
-        self.logger.debug("Reloading MiniDLNAconfiguration...")
+        self.logger.debug("Reloading MiniDLNA configuration...")
 
         if not os.path.exists(MINIDLNA_CONFIG_FILE):
 
@@ -72,7 +72,7 @@ class MiniDLNAConfig(object):
                 self.log = os.path.join(MINIDLNA_CONFIG_DIR, MINIDLNA_LOG_FILENAME)
                 f.write("log_dir={log_dir}\n".format(log_dir=MINIDLNA_CONFIG_DIR))
                 self.port = 8200+random.randint(1, 99)
-                self.logger.debug("Setting port to {port}".format(port=self.port))
+                self.logger.debug("Setting port to %s", self.port)
                 f.write("port={port}\n".format(port=self.port))
                 f.write("uuid={uuid}\n".format(uuid=str(uuid.uuid4())))
                 f.write("friendly_name=" + _("Multimedia for {user}").format(user=getpass.getuser()) + "\n")
@@ -80,44 +80,44 @@ class MiniDLNAConfig(object):
                 download_dir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOWNLOAD)
                 if download_dir:
                     if download_dir != home_dir:
-                        self.logger.debug("Adding folder {folder} as downloads...".format(folder=download_dir))
+                        self.logger.debug("Adding folder %s as downloads...", download_dir)
                         f.write("media_dir={media_dir}\n".format(media_dir=download_dir))
                         self.dirs.append(MiniDLNADirectory(download_dir, MiniDLNAMediaType.MIXED))
                     else:
-                        self.logger.debug("Detected download folder {folder} is the same as the home folder; ignoring.".format(folder=download_dir))
+                        self.logger.debug("Detected download folder %s is the same as the home folder; ignoring.", download_dir)
                 else:
                     self.logger.debug("Couldn't detect download folder; ignoring.")
 
                 pictures_dir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES)
                 if pictures_dir:
                     if pictures_dir != home_dir:
-                        self.logger.debug("Adding folder {folder} as pictures...".format(folder=pictures_dir))
+                        self.logger.debug("Adding folder %s as pictures...", pictures_dir)
                         f.write("media_dir=P,{media_dir}\n".format(media_dir=pictures_dir))
                         self.dirs.append(MiniDLNADirectory(pictures_dir, MiniDLNAMediaType.PICTURES))
                     else:
-                        self.logger.debug("Detected pictures folder {folder} is the same as the home folder; ignoring.".format(folder=pictures_dir))
+                        self.logger.debug("Detected pictures folder %s is the same as the home folder; ignoring.", pictures_dir)
                 else:
                     self.logger.debug("Couldn't detect pictures folder; ignoring.")
 
                 music_dir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_MUSIC)
                 if music_dir:
                     if music_dir != home_dir:
-                        self.logger.debug("Adding folder {folder} as music...".format(folder=music_dir))
+                        self.logger.debug("Adding folder %s as music...", music_dir)
                         f.write("media_dir=A,{media_dir}\n".format(media_dir=music_dir))
                         self.dirs.append(MiniDLNADirectory(music_dir, MiniDLNAMediaType.AUDIO))
                     else:
-                        self.logger.debug("Detected music folder {folder} is the same as the home folder; ignoring.".format(folder=music_dir))
+                        self.logger.debug("Detected music folder %s is the same as the home folder; ignoring.", music_dir)
                 else:
                     self.logger.debug("Couldn't detect music folder; ignoring.")
 
                 videos_dir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_VIDEOS)
                 if videos_dir:
                     if videos_dir != home_dir:
-                        self.logger.debug("Adding folder {folder} as videos...".format(folder=videos_dir))
+                        self.logger.debug("Adding folder %s as videos...", videos_dir)
                         f.write("media_dir=V,{media_dir}\n".format(media_dir=videos_dir))
                         self.dirs.append(MiniDLNADirectory(videos_dir, MiniDLNAMediaType.VIDEO))
                     else:
-                        self.logger.debug("Detected videos folder {folder} is the same as the home folder; ignoring.".format(folder=videos_dir))
+                        self.logger.debug("Detected videos folder %s is the same as the home folder; ignoring.", videos_dir)
                 else:
                     self.logger.debug("Couldn't detect videos folder; ignoring.")
 
@@ -126,7 +126,7 @@ class MiniDLNAConfig(object):
         else:
 
             # Obtener los datos actuales del archivo de configuración
-            self.logger.debug("Reading existing config file {config_file}...".format(config_file=MINIDLNA_CONFIG_FILE))
+            self.logger.debug("Reading existing config file %s...", MINIDLNA_CONFIG_FILE)
             with codecs.open(MINIDLNA_CONFIG_FILE, mode="r+", encoding="utf-8") as fp:
                 uuid_file = None
                 friendly_name = None
@@ -140,42 +140,42 @@ class MiniDLNAConfig(object):
                         port_str = re.sub(r'^port=', "", line)
                         try:
                             self.port = int(port_str)
-                            self.logger.debug("Setting port to {port}...".format(port=self.port))
+                            self.logger.debug("Setting port to %s...", self.port)
                         except Exception as ex:
-                            self.logger.error("Error converting port {port} to integer: {error}".format(port=port_str, error=str(ex)))
+                            self.logger.error("Error converting port %s to integer: %s", port_str, ex)
                     elif line.startswith("db_dir="):
                         db_dir = re.sub(r'^db_dir=', "", line)
-                        self.logger.debug("Setting db_dir to {db_dir}...".format(db_dir=db_dir))
+                        self.logger.debug("Setting db_dir to %s...", db_dir)
                     elif line.startswith("log_dir="):
                         log_dir = re.sub(r'^log_dir=', "", line)
                         self.log = os.path.join(log_dir, MINIDLNA_LOG_FILENAME)
-                        self.logger.debug("Setting log_dir to {log_dir}...".format(log_dir=self.log))
+                        self.logger.debug("Setting log_dir to %s...", self.log)
                     elif line.startswith("uuid="):
                         uuid_file = re.sub(r'^uuid=', "", line)
-                        self.logger.debug("Setting uuid to {uuid}...".format(uuid=uuid_file))
+                        self.logger.debug("Setting uuid to %s...", uuid_file)
                     elif line.startswith("friendly_name="):
                         friendly_name = re.sub(r'^friendly_name=', "", line)
-                        self.logger.debug("Setting friendly_name to {friendly_name}...".format(friendly_name=friendly_name))
+                        self.logger.debug("Setting friendly_name to %s...", friendly_name)
                     elif line.startswith("media_dir="):
                         line = re.sub(r'^media_dir=', '', line)
                         if line.startswith("A,"):
                             line = re.sub(r'^A,', '', line)
-                            self.logger.debug("Adding audio folder {folder}...".format(folder=line))
+                            self.logger.debug("Adding audio folder %s...", line)
                             self.dirs.append(MiniDLNADirectory(line, MiniDLNAMediaType.AUDIO))
                         elif line.startswith("P,"):
                             line = re.sub(r'^P,', '', line)
-                            self.logger.debug("Adding pictures folder {folder}...".format(folder=line))
+                            self.logger.debug("Adding pictures folder %s...", line)
                             self.dirs.append(MiniDLNADirectory(line, MiniDLNAMediaType.PICTURES))
                         elif line.startswith("V,"):
                             line = re.sub(r'^V,', '', line)
-                            self.logger.debug("Adding video folder {folder}...".format(folder=line))
+                            self.logger.debug("Adding video folder %s...", line)
                             self.dirs.append(MiniDLNADirectory(line, MiniDLNAMediaType.VIDEO))
                         elif line.startswith("PV,"):
                             line = re.sub(r'^PV,', '', line)
-                            self.logger.debug("Adding pictures/video folder {folder}...".format(folder=line))
+                            self.logger.debug("Adding pictures/video folder %s...", line)
                             self.dirs.append(MiniDLNADirectory(line, MiniDLNAMediaType.PICTURESVIDEO))
                         else:
-                            self.logger.debug("Adding mixed (no-type specified) folder {folder}...".format(folder=line))
+                            self.logger.debug("Adding mixed (no-type specified) folder %s...", line)
                             self.dirs.append(MiniDLNADirectory(line, MiniDLNAMediaType.MIXED))
 
                 if not uuid_file or not friendly_name or not log_dir or not db_dir or not self.port:
@@ -183,12 +183,12 @@ class MiniDLNAConfig(object):
                     if not uuid_file:
                         self.logger.info("No UUID specified in configuration file; generating one and saving to file...")
                         generated_uuid_file = str(uuid.uuid4())
-                        self.logger.debug("UUID generated: {uuid}".format(uuid=generated_uuid_file))
+                        self.logger.debug("UUID generated: %s", generated_uuid_file)
                         fp.write("uuid={uuid}\n".format(uuid=generated_uuid_file))
                     if not friendly_name:
                         self.logger.info("No friendly_name specified in configuration file; generating one and saving to file...")
                         generated_friendly_name = _("Multimedia for {user}").format(user=getpass.getuser())
-                        self.logger.debug("friendly_name generated: {friendly_name}".format(friendly_name=generated_friendly_name))
+                        self.logger.debug("friendly_name generated: %s", generated_friendly_name)
                         fp.write("friendly_name={friendly_name}\n".format(friendly_name=generated_friendly_name))
                     if not db_dir:
                         self.logger.info("No db_dir specified in configuration file; generating one and saving to file...")
@@ -200,7 +200,7 @@ class MiniDLNAConfig(object):
                     if not self.port:
                         self.logger.info("No port specified in configuration file; generating one and saving to file...")
                         self.port = 8200 + random.randint(1, 99)
-                        self.logger.debug("Port generated: {port}".format(port=self.port))
+                        self.logger.debug("Port generated: %s", self.port)
                         fp.write("port={port}\n".format(port=self.port))
 
             self.last_reloaded = time.time()

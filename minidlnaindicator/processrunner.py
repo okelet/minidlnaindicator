@@ -53,7 +53,7 @@ class ProcessRunner(object):
         if not self.pid:
             raise ProcessNotRunningException()
 
-        self._logger.debug("Stopping process with PID {pid}...".format(pid=self.pid))
+        self._logger.debug("Stopping process with PID %s...", self.pid)
         try:
             os.kill(self.pid, 15)
         except OSError as ex:
@@ -91,23 +91,23 @@ class ProcessRunner(object):
 
         try:
 
-            self._logger.debug("Starting process: {command}...".format(command=" ".join(command)))
+            self._logger.debug("Starting process: %s...", command)
             pipes = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
             self.pid = pipes.pid
 
-            self._logger.debug("Notifying process started with PID {pid}...".format(pid=self.pid))
+            self._logger.debug("Notifying process started with PID %s...", self.pid)
             for listener in self._listeners:
                 listener.on_process_started(self.pid)
 
             std_out, std_err = pipes.communicate()
             exit_code = pipes.returncode
 
-            self._logger.debug("Notifying process finished; PID: {pid}, exit code: {exit_code}...".format(pid=self.pid, exit_code=exit_code))
+            self._logger.debug("Notifying process finished; PID: %s, exit code: %s...", self.pid, exit_code)
             for listener in self._listeners:
                 listener.on_process_finished(self.pid, exit_code, std_out, std_err)
             self.pid = 0
 
         except Exception as ex:
-            self._logger.exception("Error running command {command}: {error}.".format(command=" ".join(command), error=str(ex)))
+            self._logger.exception("Error running command %s: %s.", command, ex)
             for listener in self._listeners:
                 listener.on_process_error(str(ex))
