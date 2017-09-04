@@ -101,15 +101,15 @@ open from the menu the LOG. If you change the configuration, please remember to 
 
 Entry in the applications menu (Ubuntu 16.04):
 
-![Applications menu](apps_menu.png)
+![Applications menu](https://raw.githubusercontent.com/okelet/minidlnaindicator/master/apps_menu.png)
 
 Indicator menu:
 
-![Indicator menu](screenshot_english.png)
+![Indicator menu](https://raw.githubusercontent.com/okelet/minidlnaindicator/master/screenshot_english.png)
 
 Indicator menu (in spanish):
 
-![Indicator menu](screenshot_spanish.png)
+![Indicator menu](https://raw.githubusercontent.com/okelet/minidlnaindicator/master/screenshot_spanish.png)
 
 
 # License
