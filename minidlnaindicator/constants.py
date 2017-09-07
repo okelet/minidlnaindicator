@@ -19,7 +19,7 @@ APP_DBUS_DOMAIN = re.sub("/", ".", APP_DBUS_DOMAIN)
 MINIDLNA_CONFIG_DIR = os.path.expanduser("~/.minidlna")
 MINIDLNA_CONFIG_FILE = os.path.join(MINIDLNA_CONFIG_DIR, "minidlna.conf")
 MINIDLNA_CACHE_DIR = os.path.join(MINIDLNA_CONFIG_DIR, "cache")
-MINIDLNA_INDICATOR_CONFIG = os.path.join(MINIDLNA_CONFIG_DIR, "indicator.yml")
+MINIDLNA_INDICATOR_CONFIG = os.path.join(MINIDLNA_CONFIG_DIR, "indicator.json")
 MINIDLNA_LOG_FILENAME = "minidlna.log"
 MINIDLNA_LOG_PATH = os.path.join(MINIDLNA_CONFIG_DIR, MINIDLNA_LOG_FILENAME)
 

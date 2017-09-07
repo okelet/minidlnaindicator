@@ -1,1 +1,4 @@
-__version__ = "0.3.0.dev0"
+
+from .version import __version__ as imported_version
+
+__version__ = imported_version

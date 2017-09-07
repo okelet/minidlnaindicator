@@ -12,7 +12,7 @@ class ProcessListener(object):
         raise NotImplementedError()
 
 
-    def on_process_finished(self, pid: int, exit_code: int, std_out: Optional[str], std_err: Optional[str]) -> None:
+    def on_process_finished(self, command: str, pid: int, exit_code: int, std_out: Optional[str], std_err: Optional[str]) -> None:
         raise NotImplementedError()
 
 

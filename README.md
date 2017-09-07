@@ -2,6 +2,7 @@
 # MiniDLNA Indicator
 
 [![Code Health](https://landscape.io/github/okelet/minidlnaindicator/master/landscape.svg?style=flat)](https://landscape.io/github/okelet/minidlnaindicator/master)
+[![PyPI](https://img.shields.io/pypi/dm/minidlnaindicator.svg)](https://pypi.python.org/pypi/minidlnaindicator)
 
 This indicator allows you to launch an instance of [MiniDLNA](https://help.ubuntu.com/community/MiniDLNA)
 as a normal user, without the need to edit configuration files as `root`, or restart by command the
@@ -45,7 +46,7 @@ you want to share); it is faster, no need to configure security.
 You will need this software to run the indicator, considering a standard initial installation of Ubuntu/Mint:
 
 ```bash
-sudo apt install minidlna python3-setuptools python3-pip python3-gi python3-yaml python3-psutil
+sudo apt install minidlna python3-setuptools python3-pip python3-gi python3-psutil
 ```
 
 For Fedora, you will need [RPM Fusion](https://rpmfusion.org/) repository:
@@ -57,7 +58,7 @@ sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-rele
 And then install these dependencies:
 
 ```bash
-sudo dnf install minidlna python3-setuptools python3-pip python3-gobject python3-yaml python3-psutil libappindicator-gtk3
+sudo dnf install minidlna python3-setuptools python3-pip python3-gobject python3-psutil libappindicator-gtk3
 ```
 
 Also remember to install the [KStatusNotifierItem/AppIndicator Support](https://extensions.gnome.org/extension/615/appindicator-support/) Gnome Shell extension
@@ -69,15 +70,12 @@ curl -s https://raw.githubusercontent.com/okelet/minidlnaindicator/master/gnome-
 ```
 
 
-## Instalation
+## Instalation/Uppgrade
 
-No `deb` or `rpm` packages available; only from Github; if someone wants to contribute, it will be welcome.
-
-Although the application is ready to publish it on PyPi, and perhaps, it would be easy to create a `deb` or `rpm`, 
-installation, must be done using `pip` with this repository:
+No `deb` or `rpm` packages available; only from PyPi; if someone wants to contribute, it will be welcome.
 
 ```
-python3 -m pip install --user git+https://github.com/okelet/minidlnaindicator.git
+python3 -m pip install --user --upgrade minidlnaindicator
 ```
 
 `pip` will create a shortcut in the applications menu.
@@ -101,15 +99,15 @@ open from the menu the LOG. If you change the configuration, please remember to 
 
 Entry in the applications menu (Ubuntu 16.04):
 
-![Applications menu](https://raw.githubusercontent.com/okelet/minidlnaindicator/master/apps_menu.png)
+![Applications menu](https://raw.githubusercontent.com/okelet/minidlnaindicator/master/doc/apps_menu.png)
 
 Indicator menu:
 
-![Indicator menu](https://raw.githubusercontent.com/okelet/minidlnaindicator/master/screenshot_english.png)
+![Indicator menu](https://raw.githubusercontent.com/okelet/minidlnaindicator/master/doc/screenshot_english.png)
 
 Indicator menu (in spanish):
 
-![Indicator menu](https://raw.githubusercontent.com/okelet/minidlnaindicator/master/screenshot_spanish.png)
+![Indicator menu](https://raw.githubusercontent.com/okelet/minidlnaindicator/master/doc/screenshot_spanish.png)
 
 
 # License
@@ -134,7 +132,6 @@ Fixes or suggestions about this "license" are welcome.
 ## TODO
 
 * Translators needed
-* Update system (from GitHub?)
 * Detect external MiniDLNA configuration changes
 * Allow some basic MiniDLNA configuration (media folders, port)
 
@@ -148,16 +145,21 @@ mypy --python-version 3.5 --ignore-missing-imports --strict .
 ```
 
 
-## Me
-
-Website (in spanish): https://okelet.github.io
-
-Email: okelet@gmail.com
-
-
 ## Credits
 
 Icons from:
 
 * http://www.easyicon.net/language.en/1090748-dlna_icon.html
 * http://www.easyicon.net/language.en/1088952-dlna_icon.html
+
+
+## Me
+
+Website (in spanish): https://okelet.github.io
+
+Email: okelet@gmail.com
+
+Other projects
+
+* [ProxyChanger](https://github.com/okelet/proxychanger) 
+

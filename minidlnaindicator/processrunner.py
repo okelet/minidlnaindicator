@@ -74,9 +74,9 @@ class ProcessRunner(object):
             return False
 
 
-    def start(self, command: List[str]) -> None:
+    def start(self, command: List[str], ignore_running: bool=False) -> None:
 
-        if self.is_running():
+        if self.is_running() and not ignore_running:
             raise RuntimeError()
 
         self._run_thread = threading.Thread(target=self._start_blocking, kwargs={"command": command})
@@ -103,9 +103,10 @@ class ProcessRunner(object):
             exit_code = pipes.returncode
 
             self._logger.debug("Notifying process finished; PID: %s, exit code: %s...", self.pid, exit_code)
-            for listener in self._listeners:
-                listener.on_process_finished(self.pid, exit_code, std_out, std_err)
+            pid = self.pid
             self.pid = 0
+            for listener in self._listeners:
+                listener.on_process_finished(command, pid, exit_code, std_out, std_err)
 
         except Exception as ex:
             self._logger.exception("Error running command %s: %s.", command, ex)

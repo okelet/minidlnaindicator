@@ -3,19 +3,18 @@
 
 from typing import List, Optional
 
-import argparse
 import dbus
 from dbus.service import Object
 from dbus.mainloop.glib import DBusGMainLoop
 import distro
-import codecs
+import getpass
 import logging
 import logging.config
 import os
 import shutil
+import signal
 import subprocess
-import sys
-import threading
+import time
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -25,57 +24,45 @@ from gi.repository import Gtk, AppIndicator3, Notify, GLib, GObject
 
 
 from .minidlnaconfig import MiniDLNAConfig
-from .constants import LOG_DIR, LOG_LEVELS, LOGGING_CONFIG, LOCALE_DIR, APPINDICATOR_ID, MINIDLNA_CONFIG_DIR, MINIDLNA_CONFIG_FILE, \
-    MINIDLNA_INDICATOR_CONFIG, XDG_CONFIG_DIR, XDG_AUTOSTART_DIR, XDG_AUTOSTART_FILE, \
+from .constants import LOCALE_DIR, APPINDICATOR_ID, MINIDLNA_CONFIG_FILE, \
     MINIDLNA_ICON_GREY, MINIDLNA_ICON_GREEN, APP_DBUS_PATH, APP_DBUS_DOMAIN
 from .indicatorconfig import MiniDLNAIndicatorConfig
 from .processrunner import ProcessRunner
 from .processlistener import ProcessListener
-from .ui.utils_ui import msgconfirm
+from .ui.utils_ui import msgconfirm, msgbox, MessageTypeEnum
 from .fsmonitor import FSMonitorThread
 from .fslistener import FSListener
-from .utils import run_command
 from .exceptions.alreadyrunning import AlreadyRunningException
+from .update_check_thread import UpdateCheckThread
+from .update_check_listener import UpdateCheckListener
 
 import gettext
 _ = gettext.translation(APPINDICATOR_ID, LOCALE_DIR, fallback=True).gettext
 
 
-class MiniDLNAIndicator(Object, ProcessListener, FSListener):
-    """
-    :type logger: logging.Loggger
-    :type config: MiniDLNAIndicatorConfig
+class MiniDLNAIndicator(Object, ProcessListener, FSListener, UpdateCheckListener):
 
-    :type indicator: AppIndicator3.Indicator
+    def __init__(self, config: MiniDLNAIndicatorConfig) -> None:
 
-    :type minidlna_pid: int
+        self.logger = logging.getLogger(__name__)  # type: logging.Logger
 
-    :type menu: Gtk.Menu
-    :type showlog_menuitem: Gtk.MenuItem
-    """
-    def __init__(self) -> None:
-
-        self.logger = logging.getLogger(__name__)
-
+        DBusGMainLoop(set_as_default=True)
         try:
-            session_bus = dbus.SessionBus(dbus.mainloop.glib.DBusGMainLoop())
+            self.session_bus = dbus.SessionBus(dbus.mainloop.glib.DBusGMainLoop())
         except dbus.DBusException:
             raise RuntimeError(_("No D-Bus connection"))
 
-        if session_bus.name_has_owner(APP_DBUS_DOMAIN):
+        if self.session_bus.name_has_owner(APP_DBUS_DOMAIN):
             raise AlreadyRunningException()
 
-        bus_name = dbus.service.BusName(APP_DBUS_DOMAIN, session_bus)
+        bus_name = dbus.service.BusName(APP_DBUS_DOMAIN, self.session_bus)
         dbus.service.Object.__init__(
             self,
             object_path=APP_DBUS_PATH,
             bus_name=bus_name
         )
 
-        if not os.path.exists(MINIDLNA_CONFIG_DIR):
-            os.mkdir(MINIDLNA_CONFIG_DIR)
-        self.config = MiniDLNAIndicatorConfig(MINIDLNA_INDICATOR_CONFIG)
-        self.set_gnome_autostart(self.config.startup_indicator)
+        self.config = config
 
         self.indicator = AppIndicator3.Indicator.new(APPINDICATOR_ID, MINIDLNA_ICON_GREY, AppIndicator3.IndicatorCategory.APPLICATION_STATUS)
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
@@ -88,30 +75,27 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
         self.menu = Gtk.Menu()
         self.indicator.set_menu(self.menu)
 
-        if distro.id() in ["fedora", "centos", "rhel"]:
-            self.detect_menuitem = Gtk.MenuItem(_("MiniDLNA not installed; click here to show how to install"))
-            self.detect_menuitem.connect('activate', lambda _: self.run_xdg_open(None, "https://github.com/okelet/minidlnaindicator"))
-        elif distro.id() in ["ubuntu", "mint"]:
+        if distro.id() in ["fedora", "centos", "rhel", "ubuntu", "mint"]:
             self.detect_menuitem = Gtk.MenuItem(_("MiniDLNA not installed; click here to install"))
-            self.detect_menuitem.connect('activate', lambda _: self.detect_minidlna(auto_start=True, install_method="apturl"))
+            self.detect_menuitem.connect('activate', lambda _: self.detect_minidlna(auto_start=True, ask_for_install=True))
         else:
             self.detect_menuitem = Gtk.MenuItem(_("MiniDLNA not installed; click here to show how to install"))
             self.detect_menuitem.connect('activate', lambda _: self.run_xdg_open(None, "https://github.com/okelet/minidlnaindicator"))
 
         self.start_menuitem = Gtk.MenuItem(_("Start MiniDLNA"))
-        self.start_menuitem.connect('activate', lambda _: self.start_minidlna_process())
+        self.start_menuitem.connect('activate', lambda _: self.start_minidlna())
 
         self.start_reindex_menuitem = Gtk.MenuItem(_("Start and reindex MiniDLNA"))
-        self.start_reindex_menuitem.connect('activate', lambda _: self.start_minidlna_process(True))
+        self.start_reindex_menuitem.connect('activate', lambda _: self.start_minidlna(True))
 
         self.restart_menuitem = Gtk.MenuItem(_("Restart MiniDLNA"))
-        self.restart_menuitem.connect('activate', lambda _: self.restart_minidlna_process_nonblocking())
+        self.restart_menuitem.connect('activate', lambda _: self.restart_minidlna())
 
         self.restart_reindex_menuitem = Gtk.MenuItem(_("Restart and reindex MiniDLNA"))
-        self.restart_reindex_menuitem.connect('activate', lambda _: self.restart_minidlna_process_nonblocking(True))
+        self.restart_reindex_menuitem.connect('activate', lambda _: self.restart_minidlna(True))
 
         self.stop_menuitem = Gtk.MenuItem(_("Stop MiniDLNA"))
-        self.stop_menuitem.connect('activate', lambda _: self.stop_minidlna_process_nonblocking())
+        self.stop_menuitem.connect('activate', lambda _: self.stop_minidlna())
 
         self.weblink_menuitem = Gtk.MenuItem(_("Web interface (port {port})").format(port=self.minidlna_config.port))
         self.weblink_menuitem.connect('activate', self.on_weblink_menuitem_activated)
@@ -124,7 +108,11 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
 
         self.indicator_startup_menuitem = Gtk.CheckMenuItem(_("Autostart indicator"))
         self.indicator_startup_menuitem.connect('activate', self.indicator_startup_menuitem_toggled)
-        self.indicator_startup_menuitem.set_active(self.config.startup_indicator)
+        self.indicator_startup_menuitem.set_active(self.config.auto_start)
+
+        self.update_available = None
+        self.new_version_menuitem = Gtk.MenuItem(_("A new version of MiniDLNA has been detected; click here to show how to upgrade"))
+        self.new_version_menuitem.connect('activate', self.run_xdg_open, "https://github.com/okelet/minidlnaindicator")
 
         self.minidlna_help_menuitem = Gtk.MenuItem(_("MiniDLNA help"))
         self.minidlna_help_menuitem.connect('activate', self.run_xdg_open, "https://help.ubuntu.com/community/MiniDLNA")
@@ -148,18 +136,26 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
         self.fs_monitor.add_listener(self)
         self.fs_monitor.start()
 
+        # Update check
+        self.update_checker = UpdateCheckThread(self.config)
+        self.update_checker.add_listener(self)
+        self.update_checker.start()
+
         # Detect minidlna and rebuild menu
         self.detect_minidlna()
 
-        # Start minidlna
+
+    def run(self):
+
         if self.minidlna_path:
             self.logger.debug("Startup: Auto-Starting MiniDLNA...")
             self.runner.start(self.get_minidlna_command())
         else:
             self.logger.debug("Startup: NOT Auto-Starting MiniDLNA because not found.")
-
-
-    def run(self):
+            self.show_notification(
+                title=_("MiniDLNA not installed"),
+                message=_("MiniDLNA is not installed.")
+            )
 
         # http://stackoverflow.com/questions/16410852/keyboard-interrupt-with-with-python-gtk
         self.mainloop = GObject.MainLoop()
@@ -262,6 +258,8 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
         self.menu.append(Gtk.SeparatorMenuItem())
         self.menu.append(self.indicator_startup_menuitem)
         self.menu.append(Gtk.SeparatorMenuItem())
+        if self.update_available:
+            self.menu.append(self.new_version_menuitem)
         self.menu.add(self.minidlna_help_menuitem)
         self.menu.add(self.indicator_help_menuitem)
         self.menu.append(self.item_quit)
@@ -282,34 +280,8 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
 
 
     def indicator_startup_menuitem_toggled(self, _: Gtk.MenuItem) -> None:
-        if self.indicator_startup_menuitem.get_active():
-            self.config.startup_indicator = True
-        else:
-            self.config.startup_indicator = False
-        self.set_gnome_autostart(self.config.startup_indicator)
-        self.config.save()
-
-
-    def set_gnome_autostart(self, enabled: bool) -> None:
-
-        # ~/.config
-        if not os.path.exists(XDG_CONFIG_DIR):
-            os.mkdir(XDG_CONFIG_DIR)
-
-        # ~/.config/autostart
-        if not os.path.exists(XDG_AUTOSTART_DIR):
-            os.mkdir(XDG_AUTOSTART_DIR)
-
-        with codecs.open(XDG_AUTOSTART_FILE, "w", "utf-8") as f:
-            f.write("[Desktop Entry]\n")
-            f.write("Encoding = UTF-8\n")
-            f.write("Type = Application\n")
-            f.write("Name = " + _("MiniDLNA Indicator") + "\n")
-            f.write("Exec = minidlnaindicator\n")
-            f.write("Icon = " + MINIDLNA_ICON_GREEN + "\n")
-            f.write("Comment = " + _("Indicator for launching MiniDLNA as a normal user") + "\n")
-            f.write("X-GNOME-Autostart-enabled = {value}\n".format(value='true' if enabled else 'false'))
-            f.write("Terminal = false\n")
+        self.config.auto_start = self.indicator_startup_menuitem.get_active()
+        self.config.save(reason="Auto start changed from indicator menu")
 
 
     #################################################################################################################
@@ -336,7 +308,8 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
         GLib.idle_add(lambda: self.weblink_menuitem.set_sensitive(True))
 
 
-    def on_process_finished(self, pid: int, exit_code: int, std_out: Optional[str], std_err: Optional[str]) -> None:
+    def on_process_finished(self, command: str, pid: int, exit_code: int, std_out: Optional[str], std_err: Optional[str]) -> None:
+
         GLib.idle_add(lambda: self.indicator.set_icon_full(MINIDLNA_ICON_GREY, ""))
         GLib.idle_add(lambda: self.start_menuitem.set_sensitive(True))
         GLib.idle_add(lambda: self.start_reindex_menuitem.set_sensitive(True))
@@ -344,7 +317,43 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
         GLib.idle_add(lambda: self.restart_reindex_menuitem.set_sensitive(False))
         GLib.idle_add(lambda: self.stop_menuitem.set_sensitive(False))
         GLib.idle_add(lambda: self.weblink_menuitem.set_sensitive(False))
+
         if exit_code != 0:
+
+            if self.config.enable_orphan_process_killer and ("error: bind(http):" in std_out or "error: bind(http):" in std_err):
+                self.logger.warning("Address already in use error message detected; we will try to kill existing orphan process for the same user and start minidlna again.")
+                try:
+                    pids_str = subprocess.check_output(["pgrep", "-U", getpass.getuser(), "minidlnad"], universal_newlines=True)
+                    if pids_str:
+                        pids = [x for x in pids_str.split("\n") if x]
+                        if len(pids) == 1:
+                            # If only 1 old orphan process found, kill it
+                            self.logger.warning("Killing orphan minidlna process: %s", pids[0])
+                            os.kill(int(pids[0]), signal.SIGTERM)
+                            # Wait to finish
+                            killed = False
+                            finish_time = time.time() + 5
+                            while time.time() < finish_time:
+                                try:
+                                    os.kill(int(pids[0]), 0)
+                                    time.sleep(0.2)
+                                except OSError:
+                                    killed = True
+                                    break
+                            if killed:
+                                self.logger.info("Orphan minidlna process with pid %s killed, starting again minidlna with command %s.", pids[0], command)
+                                self.runner.start(command, ignore_running=True)
+                                return
+                            else:
+                                self.logger.error("Orphan minidlna process with pid %s couldn't be killed.", pids[0])
+                        elif len(pids) > 1:
+                            self.logger.error("Multiple (%s) process found minidlna.", len(pids))
+                        else:
+                            # No process found for minidlna for the current user; perhaps there is another process using the same port
+                            pass
+                except Exception as ex:
+                    self.logger.exception("Error while detecting existing minidlna process: %s", ex)
+
             text = ""
             if std_out and std_err:
                 text = std_out + "\n" + std_err
@@ -352,6 +361,10 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
                 text = std_out
             elif std_err:
                 text = std_err
+            self.logger.error(
+                "MiniDLNA has exited without success; PID: %s, return code: %s, std out: %s, std err: %s",
+                pid, exit_code, std_out, std_err
+            )
             self.show_notification(
                 title=_("MiniDLNA error"),
                 message=_("MiniDLNA has exited with a code {code} and this text {text}.".format(code=exit_code, text=text))
@@ -366,47 +379,89 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
 
 
     def on_fs_changed(self, new_filesystems: List[str]) -> None:
-        # raise NotImplementedError()
         self.logger.debug("Recevived notification of FS changed: %s.", new_filesystems)
+        GLib.idle_add(self._on_fs_changed)
+
+
+    def _on_fs_changed(self) -> None:
         self.rebuild_menu()
 
 
-    def detect_minidlna(self, auto_start: bool=False, install_method: Optional[str]=None) -> None:
+    def on_update_detected(self, new_version: str) -> None:
+        self.logger.debug("Recevived notification of update detected; new version: %s.", new_version)
+        GLib.idle_add(self._on_update_detected, new_version)
 
+
+    def _on_update_detected(self, new_version: str) -> None:
+        if not self.update_available or self.update_available != new_version:
+            self.update_available = new_version
+            self.rebuild_menu()
+            self.show_notification(
+                title=_("Update available"),
+                message=_("A new version ({new_version}) of the application has been released.").format(new_version=new_version)
+            )
+
+
+    def detect_minidlna(self, auto_start: bool=False, ask_for_install: bool=False) -> None:
+
+        prev_path = self.minidlna_path
         self.minidlna_path = shutil.which("minidlnad")
+        if prev_path == self.minidlna_path and self.minidlna_path:
+            return
+
         self.rebuild_menu()
 
         if not self.minidlna_path:
-            self.show_notification(_("MiniDLNA not installed"), _("MiniDLNA is not installed."))
-            if install_method == "apturl":
-                apturl_path = shutil.which("apturl")
-                if apturl_path:
-                    if msgconfirm(
-                        title=_("MiniDLNA not installed"),
-                        message=_("MiniDLNA is not installed. Do you want to install it?"),
-                        parent=None
-                    ) == Gtk.ResponseType.YES:
-                        pid, exit_code, std_out, std_err = run_command(["apturl", "apt://minidlna"])
-                        if exit_code == 0:
-                            self.minidlna_path = shutil.which("minidlnad")
-                            self.rebuild_menu()
-                            if auto_start:
-                                self.start_minidlna_process()
-                        else:
-                            self.logger.error(
-                                "Error running apturl: PID: %s, exit code: %s, stdout: %s, stderr: %s.",
-                                pid,
-                                exit_code,
-                                std_out,
-                                std_err
-                            )
-                else:
-                    self.logger.warning("Couldn't find apturl.")
 
-            elif install_method:
-                self.logger.error("Unknown install method: %s", install_method)
+            if ask_for_install and msgconfirm(
+                    title=_("MiniDLNA not installed"),
+                    message=_("MiniDLNA is not installed. Do you want to install it?"),
+                    parent=None
+            ) == Gtk.ResponseType.YES:
 
-    def start_minidlna_process(self, reindex: bool=False) -> None:
+                try:
+
+                    proxy = self.session_bus.get_object('org.freedesktop.PackageKit', '/org/freedesktop/PackageKit')
+                    iface = dbus.Interface(proxy, 'org.freedesktop.PackageKit.Modify')
+                    self.logger.debug("Calling InstallPackageNames DBUS method...")
+                    iface.InstallPackageNames(dbus.UInt32(0), ["minidlna"], "show-confirm-search,hide-finished")
+                    self.logger.debug("InstallPackageNames returned.")
+
+                    # Ubuntu waits until installation is finished, but Fedora returns from the dbus method inmediate.
+                    # We check if installed (usually Ubuntu), and if not, notify the user to re-detect minidlna after
+                    # installation (usually Fedora).
+                    self.minidlna_path = shutil.which("minidlnad")
+                    if self.minidlna_path:
+                        self.rebuild_menu()
+                        if auto_start:
+                            self.start_minidlna()
+                    else:
+                        msgbox(
+                            title=_("Confirm installation"),
+                            message=_("If after installation, MiniDLNA is not detected automatically, click the indicator menu again."),
+                            level=MessageTypeEnum.INFO
+                        )
+
+
+                except dbus.DBusException as e:
+                    if e.get_dbus_name() == "org.freedesktop.Packagekit.Modify.Cancelled":
+                        self.logger.warning("Intallation cancelled.")
+                    elif e.get_dbus_name() == "org.freedesktop.Packagekit.Modify.Forbidden":
+                        self.logger.warning("Intallation forbidden.")
+                    else:
+                        self.logger.exception("Error installing MiniDLNA: %s", str(e))
+                        msgbox(
+                            title=_("Installation error"),
+                            message=_("An error has happened while installing MiniDLNA: {error}.".format(error=str(e))),
+                            level=MessageTypeEnum.ERROR,
+                        )
+
+        elif auto_start:
+            if not self.runner.is_running():
+                self.start_minidlna()
+
+
+    def start_minidlna(self, reindex: bool=False) -> None:
 
         if self.runner.is_running():
             raise RuntimeError()
@@ -414,35 +469,17 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
         self.runner.start(self.get_minidlna_command(reindex))
 
 
-    def restart_minidlna_process_nonblocking(self, reindex: bool=False) -> None:
+    def restart_minidlna(self, reindex: bool=False) -> None:
 
         if not self.runner.is_running():
             raise RuntimeError()
 
-        t = threading.Thread(target=self.restart_minidlna_process_blocking, kwargs={"reindex": reindex})
-        t.start()
-
-
-    def restart_minidlna_process_blocking(self, reindex: bool=False) -> None:
-
-        if not self.runner.is_running():
-            raise RuntimeError()
-
-        finished = self.stop_minidlna_process_blocking()
+        finished = self.stop_minidlna()
         if finished:
-            self.start_minidlna_process(reindex)
+            self.start_minidlna(reindex)
 
 
-    def stop_minidlna_process_nonblocking(self) -> None:
-
-        if not self.runner.is_running():
-            raise RuntimeError()
-
-        t = threading.Thread(target=self.stop_minidlna_process_blocking)
-        t.start()
-
-
-    def stop_minidlna_process_blocking(self) -> bool:
+    def stop_minidlna(self) -> None:
 
         if not self.runner.is_running():
             raise RuntimeError()
@@ -470,9 +507,13 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
         if self.fs_monitor.is_alive():
             self.fs_monitor.stop()
 
+        self.logger.debug("Stopping update checker thread...")
+        if self.update_checker.is_alive():
+            self.update_checker.stop()
+
         self.logger.debug("Stopping MiniDLNA runner thread...")
         if self.runner.is_running():
-            self.stop_minidlna_process_blocking()
+            self.stop_minidlna()
 
         self.logger.debug("Stopping Notify...")
         Notify.uninit()
@@ -480,36 +521,3 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener):
         self.logger.debug("Exiting main loop...")
         self.mainloop.quit()
 
-
-def main() -> None:
-
-    if not os.path.exists(LOG_DIR):
-        os.mkdir(LOG_DIR)
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--stderr', action='store_true')
-    parser.add_argument('-l', '--log-level', choices=LOG_LEVELS.keys())
-    args = parser.parse_args()
-
-    if args.stderr:
-        LOGGING_CONFIG["loggers"]["minidlnaindicator"]["handlers"].append("console_handler")
-
-    if args.log_level:
-        LOGGING_CONFIG["loggers"]["minidlnaindicator"]["level"] = LOG_LEVELS.get(args.log_level)
-
-    logging.config.dictConfig(LOGGING_CONFIG)
-    logger = logging.getLogger(__name__)
-
-    DBusGMainLoop(set_as_default=True)
-    try:
-        app = MiniDLNAIndicator()
-        app.run()
-    except AlreadyRunningException as _ex:
-        logger.info("Application already running.")
-        print(_("Application already running."))
-        sys.exit(0)
-
-
-if __name__ == "__main__":
-
-    main()
