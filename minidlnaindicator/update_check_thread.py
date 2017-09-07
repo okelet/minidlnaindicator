@@ -49,7 +49,7 @@ class UpdateCheckThread(threading.Thread):
         self._stop_signal.clear()
 
         # Wait 120 seconds before the first update check
-        # self._stop_signal.wait(120)
+        self._stop_signal.wait(120)
 
         while not self._stop_signal.is_set():
 
@@ -73,8 +73,7 @@ class UpdateCheckThread(threading.Thread):
             except Exception as ex:
                 self._logger.exception("Exception when checking for updates: %s", ex)
 
-            # self._stop_signal.wait(self.config.time_between_update_checks)
-            self._stop_signal.wait(5)
+            self._stop_signal.wait(self.config.time_between_update_checks)
 
         self._logger.debug("Update check thread finished.")
 
