@@ -1,9 +1,0 @@
-
-eleiminar paquetes subidos de pypi
-subir paquetes a Pypi
-
-cd ~/Dropbox/Proyectos/minidlnaindicator/
-python setup.py sdist upload -r testpypi
-
-
-valor de retorno de InstallPackageNames con dbus
