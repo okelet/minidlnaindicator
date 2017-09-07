@@ -56,7 +56,7 @@ class UpdateCheckThread(threading.Thread):
             self._logger.debug("Checking for new version...")
             try:
 
-                pypi = xmlrpc.client.ServerProxy("https://testpypi.python.org/pypi")
+                pypi = xmlrpc.client.ServerProxy("https://pypi.python.org/pypi")
                 available = pypi.package_releases("minidlnaindicator")
                 if not available:
                     self._logger.error("Porject minidlnaindicator not found in PyPi.")
