@@ -21,6 +21,7 @@ def indicator() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config')
     parser.add_argument('--stderr', action='store_true')
+    parser.add_argument('--test-mode', action='store_true')
     parser.add_argument('-l', '--log-level', choices=LOG_LEVELS.keys())
     args = parser.parse_args()
 
@@ -41,7 +42,7 @@ def indicator() -> None:
         sys.exit(1)
 
     try:
-        app = MiniDLNAIndicator(config)
+        app = MiniDLNAIndicator(config, args.test_mode)
         app.run()
     except AlreadyRunningException as _ex:
         logger.info("Application already running.")

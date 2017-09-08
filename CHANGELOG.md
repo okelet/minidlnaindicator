@@ -3,11 +3,20 @@
 All notable changes to this project will be documented in this file.
 
 
-## [Unreleased]
+## 0.5.5 - 2017-09-08
 
-### Changed
+- Added proxy support (detected from environment and Gnome settings) for update checks.
+- Added `--test-mode` parameter to ease testing during development.
 
-- No changes
+
+## 0.5 - 2017-09-07
+
+- Started to version
+- Publish to Pypi
+- New way to install from PyPi
+- Update check from PyPi
+- Kill orphan minidlna process for the same user (configurable)
+- New json format for configuration
 
 
 ## [2017.08.31] - 2017-08-31

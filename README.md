@@ -2,7 +2,6 @@
 # MiniDLNA Indicator
 
 [![Code Health](https://landscape.io/github/okelet/minidlnaindicator/master/landscape.svg?style=flat)](https://landscape.io/github/okelet/minidlnaindicator/master)
-[![PyPI](https://img.shields.io/pypi/dm/minidlnaindicator.svg)](https://pypi.python.org/pypi/minidlnaindicator)
 
 This indicator allows you to launch an instance of [MiniDLNA](https://help.ubuntu.com/community/MiniDLNA)
 as a normal user, without the need to edit configuration files as `root`, or restart by command the
@@ -70,7 +69,7 @@ curl -s https://raw.githubusercontent.com/okelet/minidlnaindicator/master/gnome-
 ```
 
 
-## Instalation/Uppgrade
+## Instalation/Upgrade
 
 No `deb` or `rpm` packages available; only from PyPi; if someone wants to contribute, it will be welcome.
 

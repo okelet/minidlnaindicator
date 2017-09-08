@@ -35,6 +35,7 @@ from .fslistener import FSListener
 from .exceptions.alreadyrunning import AlreadyRunningException
 from .update_check_thread import UpdateCheckThread
 from .update_check_listener import UpdateCheckListener
+from .version import __version__ as module_version
 
 import gettext
 _ = gettext.translation(APPINDICATOR_ID, LOCALE_DIR, fallback=True).gettext
@@ -42,7 +43,7 @@ _ = gettext.translation(APPINDICATOR_ID, LOCALE_DIR, fallback=True).gettext
 
 class MiniDLNAIndicator(Object, ProcessListener, FSListener, UpdateCheckListener):
 
-    def __init__(self, config: MiniDLNAIndicatorConfig) -> None:
+    def __init__(self, config: MiniDLNAIndicatorConfig, test_mode: bool) -> None:
 
         self.logger = logging.getLogger(__name__)  # type: logging.Logger
 
@@ -63,6 +64,7 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener, UpdateCheckListener
         )
 
         self.config = config
+        self.test_mode = test_mode
 
         self.indicator = AppIndicator3.Indicator.new(APPINDICATOR_ID, MINIDLNA_ICON_GREY, AppIndicator3.IndicatorCategory.APPLICATION_STATUS)
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
@@ -137,7 +139,7 @@ class MiniDLNAIndicator(Object, ProcessListener, FSListener, UpdateCheckListener
         self.fs_monitor.start()
 
         # Update check
-        self.update_checker = UpdateCheckThread(self.config)
+        self.update_checker = UpdateCheckThread(self.config, "minidlnaindicator", module_version, self.test_mode)
         self.update_checker.add_listener(self)
         self.update_checker.start()
 

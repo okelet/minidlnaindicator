@@ -1,13 +1,18 @@
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple, List
 
 import codecs
+import fnmatch
 import logging
 import os
 import json
+import urllib
+
+from gi.repository import Gio
 
 from .constants import XDG_CONFIG_DIR, XDG_AUTOSTART_DIR, XDG_AUTOSTART_FILE, APPINDICATOR_ID, LOCALE_DIR, LOG_LEVELS, MINIDLNA_INDICATOR_CONFIG, MINIDLNA_CONFIG_DIR
 from .update_check_thread import UpdateCheckConfig
+from .proxy import Proxy
 
 import gettext
 _ = gettext.translation(APPINDICATOR_ID, LOCALE_DIR, fallback=True).gettext
@@ -151,3 +156,47 @@ class MiniDLNAIndicatorConfig(UpdateCheckConfig):
 
         except Exception as ex:
             raise Exception(_("Exception saving the configuration: {error}.").format(error=str(ex)))
+
+
+    def detect_proxy(self) -> Optional[Proxy]:
+
+        self.logger.debug("Detecting environment proxy...")
+        current_env_proxy = os.getenv("http_proxy", os.getenv("HTTP_PROXY"))
+        if not current_env_proxy:
+            os.getenv("https_proxy", os.getenv("HTTPS_PROXY"))
+        if not current_env_proxy:
+            os.getenv("ftp_proxy", os.getenv("FTP_PROXY"))
+        if current_env_proxy:
+            url = urllib.parse.urlparse(current_env_proxy)
+            p = Proxy()
+            p.host = url.hostname
+            p.port = url.port
+            p.username = url.username
+            p.password = url.password
+            no_proxy = os.getenv("no_proxy", os.getenv("NO_PROXY"))
+            if no_proxy:
+                p.exceptions = [x.strip() for x in no_proxy.split(",") if x.strip()]
+            self.logger.info("Found proxy in environment: %s", p.to_url())
+            return p
+
+        self.logger.debug("Detecting gnome proxy settings...")
+        mode = Gio.Settings.new("org.gnome.system.proxy").get_string("mode")
+        if mode == "manual":
+            current_gnome_proxy = Gio.Settings.new("org.gnome.system.proxy.http").get_string("host")
+            current_gnome_port = Gio.Settings.new("org.gnome.system.proxy.http").get_int("port")
+            if not current_gnome_proxy:
+                current_gnome_proxy = Gio.Settings.new("org.gnome.system.proxy.https").get_string("host")
+                current_gnome_port = Gio.Settings.new("org.gnome.system.proxy.https").get_int("port")
+            if not current_gnome_proxy:
+                current_gnome_proxy = Gio.Settings.new("org.gnome.system.proxy.ftp").get_string("host")
+                current_gnome_port = Gio.Settings.new("org.gnome.system.proxy.ftp").get_int("port")
+            if current_gnome_proxy and current_gnome_port:
+                p = Proxy()
+                p.host = current_gnome_proxy
+                p.port = current_gnome_port
+                p.exceptions = Gio.Settings.new("org.gnome.system.proxy").get_strv("ignore-hosts")
+                self.logger.info("Found proxy in gnome: %s", p.to_url())
+                return p
+
+        return None
+

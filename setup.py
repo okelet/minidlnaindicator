@@ -47,8 +47,9 @@ setup(
     setup_requires=['setuptools-markdown'],
     long_description_markdown_filename='README.md',
     install_requires=[
-        "psutil",
         "distro",
+        "psutil",
+        "requests",
     ],
     entry_points = {
         'gui_scripts': [
