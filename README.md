@@ -154,7 +154,7 @@ Icons from:
 
 ## Me
 
-Website (in spanish): https://okelet.github.io
+Website (in spanish): https://okelet.com
 
 Email: okelet@gmail.com
 
